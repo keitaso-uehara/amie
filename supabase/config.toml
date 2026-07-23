@@ -1,0 +1,41 @@
+# amie — Supabase プロジェクト設定（抜粋）
+# `supabase init` で生成される config.toml をベースに、本サービスで要点となる箇所を明示。
+project_id = "amie"
+
+[db]
+major_version = 15
+
+[auth]
+# 会員登録・ログイン（S13）: メール＋SNS（Google/LINE/Apple）
+site_url = "http://localhost:8788"
+additional_redirect_urls = ["http://localhost:8788"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_confirmations = true
+
+# SNSログイン（有効化には各プロバイダのクライアントID/シークレットが必要）
+[auth.external.google]
+enabled = true
+[auth.external.apple]
+enabled = true
+# LINE は Supabase 標準プロバイダに無いため、OIDC カスタムプロバイダ or 独自実装で対応
+# [auth.external.line] は別途 Edge Function 連携で実装
+
+[storage]
+# チャットの画像添付（メイク写真・コーデ写真）。センシティブ情報のためバケットは非公開＋署名URL。
+enabled = true
+
+[functions.create-order]
+verify_jwt = true
+[functions.complete-order]
+verify_jwt = true
+[functions.create-daily-room]
+verify_jwt = true
+[functions.stripe-webhook]
+verify_jwt = false   # Stripe 署名で検証するため JWT は不要
+[functions.auto-refund]
+verify_jwt = false   # cron から service role で起動
+[functions.sns-sync]
+verify_jwt = false

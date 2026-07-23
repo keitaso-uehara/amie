@@ -51,6 +51,16 @@ assets/js/pages/*.js       各画面（クエリ読取→api→描画 の3層）
 4. マイページに取引が反映／プロフィール編集
 5. 出品者ダッシュボードで売上・手数料・宣伝リンクを確認
 
+## バックエンド（Supabase）
+
+`supabase/` に本番設計一式（テーブル/RLS/関数・トリガ/シード/Edge Functions）があります。詳細は [supabase/README.md](supabase/README.md)。
+
+- スキーマ: `supabase/migrations/0001_schema.sql`（データモデル）
+- 業務ロジック: `0002_functions.sql`（手数料20%/価格ルール/無応答自動返金/レビュー制約/集計ビュー）
+- 認可: `0003_rls.sql`（購入者/出品者/運営の分離）
+- SaaS連携: `supabase/functions/*`（Stripeエスクロー・Daily.coビデオ・cron）
+- フロント接続: `assets/js/config.js` で `backend: "supabase"` に切替、`assets/js/store.supabase.js` が `window.api` を実装（既定は `mock`）
+
 ## Next.js 移行メモ
 
 - ルートはディレクトリ構成に対応：`creators/show.html?id=x` → `/creators/[id]`
