@@ -36,7 +36,11 @@ insert into profiles (id, display_name, bio, concerns, is_admin) values
   ('c0000000-0000-0000-0000-000000000010','eri','',    '{}', false),
   ('a0000000-0000-0000-0000-000000000001','みな','垢抜けたい社会人2年目。','{akanuke,buruberu}', false),
   ('a0000000-0000-0000-0000-000000000002','さき','骨格診断してもらいたい','{kokkaku}', false),
-  ('a0000000-0000-0000-0000-000000000003','あや','オフィスコーデ迷子','{office}', true);  -- あや=運営デモ(admin)
+  ('a0000000-0000-0000-0000-000000000003','あや','オフィスコーデ迷子','{office}', true)  -- あや=運営デモ(admin)
+-- handle_new_user トリガが auth.users 挿入時に profiles を先に作るため upsert で上書きする
+on conflict (id) do update set
+  display_name = excluded.display_name, bio = excluded.bio,
+  concerns = excluded.concerns, is_admin = excluded.is_admin;
 
 -- ---- creators ----
 insert into creators (id, profile_id, handle, type, tagline, bio, verified, categories, concerns) values

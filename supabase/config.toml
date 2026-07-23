@@ -11,9 +11,11 @@ site_url = "http://localhost:8788"
 additional_redirect_urls = ["http://localhost:8788"]
 jwt_expiry = 3600
 enable_signup = true
+# ローカルデモは匿名サインインで即ログイン（本番はSNS/メールに置換）
+enable_anonymous_sign_ins = true
 
 [auth.email]
-enable_confirmations = true
+enable_confirmations = false   # ローカルはメール確認なしで即利用（本番は true）
 
 # SNSログイン（S13）。ローカルでは無効。本番では enabled=true にし、
 # client_id / secret を env() 参照で設定する（例: client_id = "env(GOOGLE_CLIENT_ID)"）。

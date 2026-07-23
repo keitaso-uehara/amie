@@ -6,8 +6,8 @@
    store.js の代わりに store.supabase.js を読み込む。
    ========================================================= */
 window.AMIE_CONFIG = {
-  // "mock"=localStorage(既定) / "supabase"=ローカルSupabase(下記)
-  backend: "mock",
+  // "mock"=localStorage / "supabase"=ローカルSupabase(下記)
+  backend: "supabase",
 
   // ローカル Supabase（`supabase start` の出力値。anonキーはローカル専用の公開既定値）
   supabaseUrl: "http://127.0.0.1:54321",

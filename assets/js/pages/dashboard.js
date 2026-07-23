@@ -9,8 +9,11 @@
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
     if (!api.getSession()) { main.innerHTML = UI.empty("ログインすると出品者ダッシュボードが使えます。", "ログイン", "login/index.html"); return; }
-    Promise.all([api.getCreator("c001"), api.getMyPlans(), api.getMySeller()]).then(function (res) {
-      var c = res[0], myPlans = res[1], mySeller = res[2];
+    // サンプル実績は注目トップ出品者を動的に取得（固定IDに依存しない）
+    api.getFeaturedCreators(1).then(function (top) {
+      return Promise.all([top[0] ? api.getCreator(top[0].id) : Promise.resolve(null), api.getMyPlans(), api.getMySeller()]);
+    }).then(function (res) {
+      var c = res[0] || { plans: [], stats: { rating: 0 } }, myPlans = res[1], mySeller = res[2];
       // デモ用の当月売上(プラン価格×直近販売の想定)
       var gross = 184000, pending = 46000;
       var net = Math.round(gross * (1 - FEE));
