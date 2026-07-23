@@ -5,3 +5,9 @@ node_modules/
 
 # Claude Code のローカル設定（プレビュー設定・静的サーバー）
 .claude/
+
+# Supabase CLI のローカル一時ファイル（接続情報・DBパスワードを含むため絶対にコミットしない）
+supabase/.temp/
+supabase/.branches/
+.env
+supabase/.env

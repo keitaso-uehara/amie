@@ -1,0 +1,5 @@
+# Vercel には静的フロント(HTML/CSS/JS)だけを配信する。以下は除外。
+supabase/
+.claude/
+node_modules/
+*.md
