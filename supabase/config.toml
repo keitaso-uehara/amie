@@ -15,11 +15,16 @@ enable_signup = true
 [auth.email]
 enable_confirmations = true
 
-# SNSログイン（有効化には各プロバイダのクライアントID/シークレットが必要）
+# SNSログイン（S13）。ローカルでは無効。本番では enabled=true にし、
+# client_id / secret を env() 参照で設定する（例: client_id = "env(GOOGLE_CLIENT_ID)"）。
 [auth.external.google]
-enabled = true
+enabled = false
+# client_id = "env(GOOGLE_CLIENT_ID)"
+# secret = "env(GOOGLE_SECRET)"
 [auth.external.apple]
-enabled = true
+enabled = false
+# client_id = "env(APPLE_CLIENT_ID)"
+# secret = "env(APPLE_SECRET)"
 # LINE は Supabase 標準プロバイダに無いため、OIDC カスタムプロバイダ or 独自実装で対応
 # [auth.external.line] は別途 Edge Function 連携で実装
 
