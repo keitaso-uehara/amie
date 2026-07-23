@@ -14,7 +14,22 @@ window.api = (function () {
 
   function defaults() {
     return { session: null, seq: 0, favorites: [], orders: [], read: [],
-             threads: {}, profile: { avatar: null, bio: "", concerns: [] } };
+             threads: {}, profile: { avatar: null, bio: "", concerns: [] },
+             myReviews: {}, myPlans: [], mySeller: null, reports: [], reviewed: [] };
+  }
+
+  /* NGワード検知(仕様書 6章): LINE ID・URL・電話/口座番号らしき文字列 */
+  var NG_PATTERNS = [
+    { re: /https?:\/\/|\.com|\.jp|\.me\b/i, label: "外部サイトURL" },
+    { re: /\bline\b|ライン(交換|のid|@|＠)|カカオ|id交換|連絡先.{0,4}(交換|教え)/i, label: "外部連絡先への誘導" },
+    { re: /\d{10,}/, label: "電話・口座番号らしき数字" },
+    { re: /(振込|口座番号|現金書留|直接.{0,3}(振込|支払))/, label: "外部決済への誘導" }
+  ];
+  function ngCheck(text) {
+    for (var i = 0; i < NG_PATTERNS.length; i++) {
+      if (NG_PATTERNS[i].re.test(text)) return NG_PATTERNS[i].label;
+    }
+    return null;
   }
   function getState() {
     try { return Object.assign(defaults(), JSON.parse(localStorage.getItem(KEY)) || {}); }
@@ -23,18 +38,44 @@ window.api = (function () {
   function setState(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+  /* シード＋ローカル投稿レビューを結合して返す */
+  function reviewsFor(planId) {
+    var st = getState();
+    return (window.DB.reviews[planId] || []).concat(st.myReviews[planId] || []);
+  }
+  /* 全プラン(シード＋自分で作成したプラン) */
+  function allPlans() {
+    return window.DB.plans.concat(getState().myPlans || []);
+  }
+  /* 全出品者(シード＋自分の出品者プロフィール) */
+  function allCreators() {
+    var st = getState();
+    return st.mySeller ? window.DB.creators.concat([st.mySeller]) : window.DB.creators;
+  }
+  /* 自分の出品者プロフィールを用意(なければ雛形を作る)。state を変更するが保存は呼び出し側 */
+  function ensureSeller(st) {
+    if (!st.mySeller) {
+      st.mySeller = {
+        id: "c_me", name: (window.DB.users[0] && window.DB.users[0].name) || "あなた", handle: "you",
+        type: "general", typeLabel: "出品者", verified: false,
+        tagline: "", bio: "", categories: [], concerns: [],
+        sns: {}, stats: { sales: 0, rating: 0, repeat: 0 }, planIds: []
+      };
+    }
+    return st.mySeller;
+  }
+
   /* 出品者に、そのプラン一覧と集約レビューを添える */
   function hydrateCreator(c) {
     if (!c) return c;
     c = clone(c);
+    var plans = allPlans();
     c.plans = (c.planIds || []).map(function (pid) {
-      return window.DB.plans.filter(function (p) { return p.id === pid; })[0];
+      return plans.filter(function (p) { return p.id === pid; })[0];
     }).filter(Boolean);
     var reviews = [];
     (c.planIds || []).forEach(function (pid) {
-      (window.DB.reviews[pid] || []).forEach(function (r) {
-        reviews.push(Object.assign({ planId: pid }, r));
-      });
+      reviewsFor(pid).forEach(function (r) { reviews.push(Object.assign({ planId: pid }, r)); });
     });
     c.reviews = reviews;
     return c;
@@ -44,8 +85,8 @@ window.api = (function () {
   function hydratePlan(p) {
     if (!p) return p;
     p = clone(p);
-    p.creator = window.DB.creators.filter(function (c) { return c.id === p.creatorId; })[0] || null;
-    p.reviews = window.DB.reviews[p.id] || [];
+    p.creator = allCreators().filter(function (c) { return c.id === p.creatorId; })[0] || null;
+    p.reviews = reviewsFor(p.id);
     return p;
   }
 
@@ -53,7 +94,7 @@ window.api = (function () {
     /* ---------- 出品者 ---------- */
     getCreators: function (params) {
       params = params || {};
-      var list = window.DB.creators.map(hydrateCreator);
+      var list = allCreators().map(hydrateCreator);
       if (params.cat) {
         var cats = String(params.cat).split(",");
         list = list.filter(function (c) { return c.categories.some(function (x) { return cats.indexOf(x) !== -1; }); });
@@ -73,7 +114,7 @@ window.api = (function () {
       return Promise.resolve(list);
     },
     getCreator: function (id) {
-      return Promise.resolve(hydrateCreator(window.DB.creators.filter(function (c) { return c.id === id; })[0] || null));
+      return Promise.resolve(hydrateCreator(allCreators().filter(function (c) { return c.id === id; })[0] || null));
     },
     /* SNSフォロワー合計の多い順(TOPの注目出品者) */
     getFeaturedCreators: function (n) {
@@ -86,7 +127,7 @@ window.api = (function () {
     /* ---------- プラン ---------- */
     getPlans: function (params) {
       params = params || {};
-      var list = window.DB.plans.map(hydratePlan);
+      var list = allPlans().map(hydratePlan);
       if (params.creatorId) list = list.filter(function (p) { return p.creatorId === params.creatorId; });
       if (params.cat) {
         var cats = String(params.cat).split(",");
@@ -108,17 +149,31 @@ window.api = (function () {
       return Promise.resolve(list);
     },
     getPlan: function (id) {
-      return Promise.resolve(hydratePlan(window.DB.plans.filter(function (p) { return p.id === id; })[0] || null));
+      return Promise.resolve(hydratePlan(allPlans().filter(function (p) { return p.id === id; })[0] || null));
     },
     getNewPlans: function (n) {
-      var list = window.DB.plans.map(hydratePlan).slice().reverse();
+      var list = allPlans().map(hydratePlan).slice().reverse();
       return Promise.resolve(n ? list.slice(0, n) : list);
     },
 
     /* ---------- レビュー ---------- */
     getReviews: function (planId) {
-      return Promise.resolve(clone(window.DB.reviews[planId] || []));
+      return Promise.resolve(clone(reviewsFor(planId)));
     },
+    /* 取引完了後のレビュー投稿(仕様書 S9)。1取引1回・投稿後編集不可 */
+    postReview: function (orderId, planId, rating, body) {
+      var st = getState();
+      if (st.reviewed.indexOf(orderId) !== -1) return Promise.reject(new Error("already reviewed"));
+      st.myReviews[planId] = st.myReviews[planId] || [];
+      st.myReviews[planId].unshift({ userId: "u001", rating: rating, body: body, date: "たった今" });
+      st.reviewed.push(orderId);
+      setState(st);
+      return Promise.resolve();
+    },
+    canReview: function (orderId) { return getState().reviewed.indexOf(orderId) === -1; },
+
+    /* ---------- NGワード検知(メッセージ送信前) ---------- */
+    checkMessage: function (text) { return ngCheck(text); },
 
     /* ---------- お気に入り(プラン/出品者) ---------- */
     toggleFavorite: function (kind, id) {
@@ -135,8 +190,8 @@ window.api = (function () {
       var plans = [], creators = [];
       st.favorites.forEach(function (k) {
         var parts = k.split(":");
-        if (parts[0] === "plan") { var p = hydratePlan(window.DB.plans.filter(function (x) { return x.id === parts[1]; })[0]); if (p) plans.push(p); }
-        if (parts[0] === "creator") { var c = hydrateCreator(window.DB.creators.filter(function (x) { return x.id === parts[1]; })[0]); if (c) creators.push(c); }
+        if (parts[0] === "plan") { var p = hydratePlan(allPlans().filter(function (x) { return x.id === parts[1]; })[0]); if (p) plans.push(p); }
+        if (parts[0] === "creator") { var c = hydrateCreator(allCreators().filter(function (x) { return x.id === parts[1]; })[0]); if (c) creators.push(c); }
       });
       return Promise.resolve({ plans: plans, creators: creators });
     },
@@ -148,7 +203,7 @@ window.api = (function () {
       opts = opts || {};
       var st = getState();
       st.seq += 1;
-      var plan = window.DB.plans.filter(function (p) { return p.id === planId; })[0];
+      var plan = allPlans().filter(function (p) { return p.id === planId; })[0];
       if (!plan) return Promise.reject(new Error("plan not found"));
       var order = {
         id: "o_" + st.seq,
@@ -172,8 +227,9 @@ window.api = (function () {
       var st = getState();
       var list = st.orders.map(function (o) {
         var out = clone(o);
-        out.plan = hydratePlan(window.DB.plans.filter(function (p) { return p.id === o.planId; })[0]);
-        out.creator = window.DB.creators.filter(function (c) { return c.id === o.creatorId; })[0] || null;
+        out.plan = hydratePlan(allPlans().filter(function (p) { return p.id === o.planId; })[0]);
+        out.creator = allCreators().filter(function (c) { return c.id === o.creatorId; })[0] || null;
+        out.reviewable = out.status === "completed" && st.reviewed.indexOf(o.id) === -1;
         return out;
       }).reverse();
       return Promise.resolve(list);
@@ -186,6 +242,13 @@ window.api = (function () {
     cancelSubscription: function (orderId) {
       var st = getState();
       st.orders.forEach(function (o) { if (o.id === orderId) o.status = "canceled"; });
+      setState(st);
+      return Promise.resolve();
+    },
+    /* 取引完了(ビデオ実施後の完了操作・チャット期間満了のモック)→ 売上確定・レビュー可能に */
+    completeOrder: function (orderId) {
+      var st = getState();
+      st.orders.forEach(function (o) { if (o.id === orderId && o.status === "progress") o.status = "completed"; });
       setState(st);
       return Promise.resolve();
     },
@@ -203,12 +266,87 @@ window.api = (function () {
     getThread: function (orderId) {
       return Promise.resolve(clone(getState().threads[orderId] || []));
     },
-    sendMessage: function (orderId, body) {
+    sendMessage: function (orderId, body, opts) {
+      opts = opts || {};
       var st = getState();
       st.threads[orderId] = st.threads[orderId] || [];
-      st.threads[orderId].push({ from: "me", body: body, timeLabel: "たった今" });
+      st.threads[orderId].push({ from: "me", body: body, image: !!opts.image, read: true, timeLabel: "たった今" });
       setState(st);
       return Promise.resolve(clone(st.threads[orderId]));
+    },
+
+    /* ---------- プラン作成・編集(S12) ---------- */
+    createPlan: function (data) {
+      var st = getState();
+      st.seq += 1;
+      var id = "p_local_" + st.seq;
+      var seller = ensureSeller(st);
+      var plan = {
+        id: id, creatorId: seller.id, title: data.title, format: data.format,
+        price: Number(data.price), category: data.category, concerns: data.concerns || [],
+        desc: data.desc, stats: { rating: 0, sales: 0 }
+      };
+      if (data.format === "chat") plan.chatDays = data.chatDays || 7;
+      if (data.format === "video") plan.minutes = data.minutes || 60;
+      if (data.format === "monthly") { plan.monthlyVideos = data.monthlyVideos || 0; plan.chatIncluded = true; }
+      st.myPlans.push(plan);
+      seller.planIds.push(id);
+      st.mySeller = seller;
+      setState(st);
+      return Promise.resolve(hydratePlan(plan));
+    },
+    getMyPlans: function () {
+      return Promise.resolve((getState().myPlans || []).map(hydratePlan).reverse());
+    },
+
+    /* ---------- 出品者プロフィール(S15 出品者) ---------- */
+    getMySeller: function () {
+      var st = getState();
+      return Promise.resolve(st.mySeller ? hydrateCreator(st.mySeller) : null);
+    },
+    setMySeller: function (data) {
+      var st = getState();
+      var seller = ensureSeller(st);
+      if (data.name != null) seller.name = data.name;
+      if (data.tagline != null) seller.tagline = data.tagline;
+      if (data.bio != null) seller.bio = data.bio;
+      if (data.categories) seller.categories = data.categories;
+      if (data.sns) seller.sns = data.sns;
+      st.mySeller = seller;
+      setState(st);
+      return Promise.resolve(hydrateCreator(seller));
+    },
+
+    /* ---------- 通報(S3/S6) ---------- */
+    report: function (data) {
+      var st = getState();
+      st.seq += 1;
+      st.reports.push({ id: "r_" + st.seq, target: data.target || "", reason: data.reason || "", date: "たった今", status: "open" });
+      setState(st);
+      return Promise.resolve({ ok: true });
+    },
+
+    /* ---------- 運営管理(A1-A4)のデータ(デモ) ---------- */
+    getAdminQueue: function () {
+      // A1 出品パトロール: シードプラン＋自作プランを審査キューに見立てる
+      var plans = allPlans().map(hydratePlan).slice(0, 8);
+      return Promise.resolve(plans.map(function (p, i) {
+        return { plan: p, flagged: p.price > 50000, newSeller: (p.creator && p.creator.type === "general") };
+      }));
+    },
+    getAdminReports: function () {
+      var seed = [
+        { id: "r_seed1", target: "メッセージ / o_seed", reason: "外部サイトへの誘導の疑い", date: "1時間前", status: "open" },
+        { id: "r_seed2", target: "出品者 / ゆず", reason: "資格の誇大表示", date: "昨日", status: "open" }
+      ];
+      return Promise.resolve(seed.concat(getState().reports));
+    },
+    getAdminPayouts: function () {
+      return Promise.resolve([
+        { id: "po_1", creator: "MOEKA", amount: 147200, kyc: true, status: "承認待ち" },
+        { id: "po_2", creator: "kaori", amount: 96000, kyc: true, status: "承認待ち" },
+        { id: "po_3", creator: "ゆず", amount: 18800, kyc: false, status: "本人確認未了" }
+      ]);
     },
 
     /* ---------- 通知 ---------- */
@@ -217,7 +355,7 @@ window.api = (function () {
       var list = clone(window.DB.notifications);
       list.forEach(function (n) {
         if (st.read.indexOf(n.id) !== -1) n.read = true;
-        n.actor = n.actorId ? (window.DB.creators.filter(function (c) { return c.id === n.actorId; })[0] || null) : null;
+        n.actor = n.actorId ? (allCreators().filter(function (c) { return c.id === n.actorId; })[0] || null) : null;
       });
       return Promise.resolve(list);
     },

@@ -8,7 +8,9 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
-    api.getCreator("c001").then(function (c) {
+    if (!api.getSession()) { main.innerHTML = UI.empty("ログインすると出品者ダッシュボードが使えます。", "ログイン", "login/index.html"); return; }
+    Promise.all([api.getCreator("c001"), api.getMyPlans(), api.getMySeller()]).then(function (res) {
+      var c = res[0], myPlans = res[1], mySeller = res[2];
       // デモ用の当月売上(プラン価格×直近販売の想定)
       var gross = 184000, pending = 46000;
       var net = Math.round(gross * (1 - FEE));
@@ -16,12 +18,29 @@
         head(gross, net) +
         cards(pending, c) +
         limitBox() +
+        myPlansSection(myPlans, mySeller) +
         plansSection(c) +
         promoSection(c) +
         UI.siteFooter();
-      bind();
+      bind(mySeller);
     });
   });
+
+  /* 自分の出品プラン(S12で作成したもの) */
+  function myPlansSection(myPlans, mySeller) {
+    var inner = myPlans.length
+      ? '<div class="plan-list">' + myPlans.map(UI.planCard).join("") + "</div>"
+      : '<p class="lead">まだ出品プランがありません。最初のプランを作ってみましょう。</p>';
+    return (
+      '<div class="section">' +
+      '<p class="section__title">あなたの出品プラン' +
+      '<a class="more" href="' + h("plans/new.html") + '">＋ 新規出品</a></p>' +
+      (mySeller ? '<div class="dash-limit" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("user") +
+        " 出品者プロフィール：" + esc(mySeller.name) +
+        ' <button class="btn btn--sm btn--outline" id="edit-seller" style="margin-left:8px;">編集</button></div>' : "") +
+      inner + "</div>"
+    );
+  }
 
   function head(gross, net) {
     return (
@@ -55,9 +74,8 @@
 
   function plansSection(c) {
     return (
-      '<div class="section">' +
-      '<p class="section__title">プラン管理' +
-      '<button class="more" id="new-plan">＋ 新規出品</button></p>' +
+      '<div class="section hr">' +
+      '<p class="section__title">サンプル：MOEKAさんのプラン実績</p>' +
       '<div class="plan-list">' + c.plans.map(function (p) {
         return '<div style="position:relative;">' + UI.planCard(p) +
           '<p class="field-note" style="padding:0 4px 8px;">閲覧 ' + (p.stats.sales * 6) + " ・ 購入 " + p.stats.sales + "</p></div>";
@@ -79,12 +97,55 @@
     );
   }
 
-  function bind() {
+  function bind(mySeller) {
     var copy = document.getElementById("copy");
     if (copy) copy.addEventListener("click", function () { UI.toast("宣伝リンクをコピーしました"); });
-    var np = document.getElementById("new-plan");
-    if (np) np.addEventListener("click", function () { UI.toast("プラン作成はデモでは準備中です"); });
     var lm = document.getElementById("limit");
     if (lm) lm.addEventListener("click", function () { UI.toast("本人確認(eKYC)へ進みます（デモ）"); });
+    var es = document.getElementById("edit-seller");
+    if (es) es.addEventListener("click", function () { openSellerEdit(mySeller); });
+  }
+
+  /* S15 出品者プロフィール編集 */
+  function openSellerEdit(seller) {
+    seller = seller || {};
+    var cats = TAX.categories.map(function (c) {
+      var on = (seller.categories || []).indexOf(c.slug) !== -1 ? " is-on" : "";
+      return '<button type="button" class="pill' + on + '" data-cat="' + c.slug + '">' + esc(c.label) + "</button>";
+    }).join("");
+    var s = seller.sns || {};
+    var ov = UI.openSheet(
+      '<p class="sheet__q">出品者プロフィール編集</p>' +
+      '<div class="form-row"><label class="field-label">表示名</label><input class="field" id="s-name" value="' + esc(seller.name || "") + '"></div>' +
+      '<div class="form-row"><label class="field-label">ひとこと</label><input class="field" id="s-tag" value="' + esc(seller.tagline || "") + '" placeholder="例）垢抜けメイクの伝道師"></div>' +
+      '<div class="form-row"><label class="field-label">自己紹介・経歴</label><textarea class="field field--area" id="s-bio">' + esc(seller.bio || "") + "</textarea></div>" +
+      '<div class="form-row"><label class="field-label">カテゴリ（最大3）</label><div class="tag-cloud" id="s-cats">' + cats + "</div></div>" +
+      '<div class="form-row"><label class="field-label">SNS連携（フォロワー数）</label>' +
+      '<input class="field" id="s-ig" type="number" inputmode="numeric" placeholder="Instagram フォロワー数" value="' + (s.instagram || "") + '" style="margin-bottom:8px;">' +
+      '<input class="field" id="s-tt" type="number" inputmode="numeric" placeholder="TikTok フォロワー数" value="' + (s.tiktok || "") + '">' +
+      '<p class="field-note">実装では各SNSのOAuth連携で自動取得し、認証バッジを付与します。</p></div>' +
+      '<button class="btn btn--rose btn--block" id="s-save">保存する</button>'
+    );
+    ov.querySelectorAll("[data-cat]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (!b.classList.contains("is-on") && ov.querySelectorAll("[data-cat].is-on").length >= 3) { UI.toast("カテゴリは最大3つまでです"); return; }
+        b.classList.toggle("is-on");
+      });
+    });
+    ov.querySelector("#s-save").addEventListener("click", function () {
+      var sns = {};
+      var ig = Number(ov.querySelector("#s-ig").value); if (ig) sns.instagram = ig;
+      var tt = Number(ov.querySelector("#s-tt").value); if (tt) sns.tiktok = tt;
+      api.setMySeller({
+        name: ov.querySelector("#s-name").value.trim() || "あなた",
+        tagline: ov.querySelector("#s-tag").value.trim(),
+        bio: ov.querySelector("#s-bio").value.trim(),
+        categories: Array.prototype.map.call(ov.querySelectorAll("[data-cat].is-on"), function (b) { return b.dataset.cat; }),
+        sns: sns
+      }).then(function () {
+        UI.closeSheet(); UI.toast("保存しました");
+        setTimeout(function () { location.reload(); }, 400);
+      });
+    });
   }
 })();

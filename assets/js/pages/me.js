@@ -4,7 +4,7 @@
   var esc = function (s) { return App.esc(s); };
   var h = function (p) { return App.href(p); };
 
-  var STATUS = { progress: ["進行中", "status--progress"], active: ["契約中", "status--active"], canceled: ["終了", "status--canceled"] };
+  var STATUS = { progress: ["進行中", "status--progress"], active: ["契約中", "status--active"], completed: ["完了", "status--progress"], canceled: ["終了", "status--canceled"] };
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
@@ -46,12 +46,17 @@
   }
   function orderItem(o) {
     var c = o.creator || {}, s = STATUS[o.status] || STATUS.progress;
+    var review = o.reviewable
+      ? '<a class="order-item__review" href="' + h("review/index.html?order=" + o.id) + '">' + UI.icon("star") + " レビューを書く</a>"
+      : "";
     return (
-      '<a class="order-item" href="' + h("messages/index.html?order=" + o.id) + '">' +
+      '<div class="order-item">' +
+      '<a class="order-item__main" href="' + h("messages/index.html?order=" + o.id) + '">' +
       UI.avatar(c, "avatar--lg") +
       '<div class="order-item__body"><p class="order-item__title">' + esc(o.plan ? o.plan.title : "") + "</p>" +
       '<p class="order-item__meta">' + esc(c.name) + (o.slot ? " ・" + esc(o.slot) : "") + "</p></div>" +
-      '<span class="status-chip ' + s[1] + '">' + s[0] + "</span></a>"
+      '<span class="status-chip ' + s[1] + '">' + s[0] + "</span></a>" + review +
+      "</div>"
     );
   }
 
