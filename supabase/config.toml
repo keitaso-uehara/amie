@@ -7,8 +7,8 @@ major_version = 15
 
 [auth]
 # 会員登録・ログイン（S13）: メール＋SNS（Google/LINE/Apple）
-site_url = "http://localhost:8788"
-additional_redirect_urls = ["http://localhost:8788"]
+site_url = "https://amie-topaz.vercel.app"
+additional_redirect_urls = ["https://amie-topaz.vercel.app", "http://localhost:8788"]
 jwt_expiry = 3600
 enable_signup = true
 # ローカルデモは匿名サインインで即ログイン（本番はSNS/メールに置換）
