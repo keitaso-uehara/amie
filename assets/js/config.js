@@ -6,13 +6,14 @@
    store.js の代わりに store.supabase.js を読み込む。
    ========================================================= */
 window.AMIE_CONFIG = {
-  // "mock"=localStorage / "supabase"=ローカルSupabase(下記)
+  // "mock"=localStorage / "supabase"=Supabase(下記)
   backend: "supabase",
 
-  // ローカル Supabase（`supabase start` の出力値。anonキーはローカル専用の公開既定値）
-  supabaseUrl: "http://127.0.0.1:54321",
-  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
-  functionsBase: "http://127.0.0.1:54321/functions/v1"
+  // 本番 Supabase（info@blue-co.jp's Project・東京リージョン）
+  // anonキーは公開キー（RLSで保護）。service_roleキーはここに置かないこと。
+  supabaseUrl: "https://qfsfsxlpqmqcdobdqnvu.supabase.co",
+  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmc2ZzeGxwcW1xY2RvYmRxbnZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MDkzNTUsImV4cCI6MjEwMDM4NTM1NX0.EuX9ugiVvRZKKTp4KJSDtyIDd0B0azzPnPEicnPA9S8",
+  functionsBase: "https://qfsfsxlpqmqcdobdqnvu.supabase.co/functions/v1"
 
-  // 本番はここを本番プロジェクトのURL/anonキーに差し替える。Studio: http://127.0.0.1:54323
+  // ローカルに戻す場合: url=http://127.0.0.1:54321, anon=`supabase start`の出力値
 };
