@@ -1,0 +1,117 @@
+/* =========================================================
+   components.css — カード/バッジ/レビュー/SNS表示など共通部品
+   ========================================================= */
+
+/* ---------- 星評価 ---------- */
+.stars { color: var(--gold); font-size: 13px; letter-spacing: 1px; display: inline-flex; }
+.stars i { font-size: 13px; }
+
+/* ---------- 形式バッジ ---------- */
+.fmt {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 24px; padding: 0 10px; border-radius: var(--r-pill);
+  font-size: var(--fs-sm); font-weight: 700; color: #fff;
+}
+.fmt i { font-size: 13px; }
+.fmt--chat { background: #6BA292; }
+.fmt--video { background: #7C6BB0; }
+.fmt--monthly { background: var(--rose); }
+
+/* ---------- 出品者タイプバッジ ---------- */
+.type-badge {
+  display: inline-block; height: 22px; line-height: 22px; padding: 0 10px;
+  border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 700;
+}
+.type--celebrity { background: var(--gold-pale); color: var(--gold); }
+.type--influencer { background: var(--rose-pale); color: var(--rose-deep); }
+.type--pro { background: #E7EFEC; color: #3F7A68; }
+.type--general { background: var(--sand); color: var(--ink-soft); }
+
+/* ---------- SNSフォロワー数 ---------- */
+.sns-follows { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+.sns-follows--compact { gap: 6px; }
+.sns-follow {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: var(--fs-sm); color: var(--ink-soft);
+}
+.sns-follow i { font-size: 14px; }
+.sns-follow b { font-weight: 700; color: var(--ink); }
+.sns-follow--ig i { color: var(--ig); }
+.sns-follow--tiktok i { color: var(--tiktok); }
+.sns-follow--youtube i { color: var(--youtube); }
+.sns-follow--x i { color: var(--x); }
+.price { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+.price small { font-size: var(--fs-sm); font-weight: 500; color: var(--gray-l); }
+
+/* ---------- 出品者カード ---------- */
+.creator-card {
+  display: block; position: relative;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  overflow: hidden; background: #fff; box-shadow: var(--shadow-card);
+}
+.creator-card__cover { display: block; height: 64px; background: linear-gradient(120deg, var(--rose-pale), var(--gold-pale)); }
+.creator-card__avatar { position: absolute; top: 34px; left: var(--sp-4); border: 3px solid #fff; }
+.creator-card__body { padding: 22px var(--sp-4) var(--sp-4); }
+.creator-card__name { font-size: var(--fs-lg); font-weight: 700; display: flex; align-items: center; }
+.creator-card__type { font-size: var(--fs-sm); color: var(--gray); margin-bottom: 4px; }
+.creator-card__tagline { font-size: var(--fs-md); color: var(--ink-soft); margin-top: 4px; }
+
+/* ---------- 出品者ミニ(横スクロール) ---------- */
+.creator-scroll { display: flex; gap: var(--sp-3); overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.creator-scroll::-webkit-scrollbar { display: none; }
+.creator-mini {
+  flex: 0 0 132px; text-align: center;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-2); background: #fff;
+}
+.creator-mini .avatar--lg { margin: 0 auto 8px; }
+.creator-mini__name { font-size: var(--fs-base); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.creator-mini__type { font-size: var(--fs-xs); color: var(--gray); margin-bottom: 4px; }
+.creator-mini .sns-follows { justify-content: center; }
+
+/* ---------- プランカード ---------- */
+.plan-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.plan-card {
+  display: block; border: 1px solid var(--line); border-radius: var(--r-lg);
+  overflow: hidden; background: #fff; box-shadow: var(--shadow-card);
+}
+.plan-card__cover {
+  height: 96px; background: linear-gradient(135deg, var(--sand), var(--rose-pale));
+  display: flex; align-items: flex-start; padding: var(--sp-2);
+}
+.plan-card__body { padding: var(--sp-3); }
+.plan-card__title { font-size: var(--fs-base); font-weight: 700; line-height: 1.5; margin-bottom: 6px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.plan-card__creator { display: flex; align-items: center; gap: 5px; font-size: var(--fs-sm); color: var(--ink-soft); margin-bottom: 6px; }
+.plan-card__detail { font-size: var(--fs-sm); color: var(--gray); display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+.plan-card__detail i { font-size: 13px; }
+.plan-card__foot { display: flex; align-items: center; justify-content: space-between; }
+.plan-card__rating { font-size: var(--fs-sm); color: var(--ink-soft); }
+.plan-card__rating i { color: var(--gold); font-size: 12px; }
+.plan-card__rating small { color: var(--gray-l); }
+.plan-grid .plan-card__title { -webkit-line-clamp: 2; min-height: 40px; }
+
+/* ---------- レビュー ---------- */
+.review { padding: var(--sp-3) 0; border-bottom: 1px solid var(--sand); }
+.review__head { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); margin-bottom: 4px; }
+.review__head b { font-weight: 700; }
+.review__date { color: var(--gray-l); margin-left: auto; font-size: var(--fs-xs); }
+.review__body { font-size: var(--fs-base); color: var(--ink-soft); line-height: 1.7; }
+
+/* ---------- 数値タイル ---------- */
+.stat-row { display: flex; gap: var(--sp-2); }
+.stat-tile { flex: 1; text-align: center; padding: var(--sp-3) var(--sp-2); background: var(--cream); border-radius: var(--r-md); }
+.stat-tile__value { font-size: var(--fs-2xl); font-weight: 700; color: var(--rose-deep); }
+.stat-tile__value .stat-tile__unit { font-size: var(--fs-md); font-weight: 500; color: var(--gray); }
+.stat-tile__label { font-size: var(--fs-sm); color: var(--gray); margin-top: 2px; }
+
+/* ---------- サイトフッター ---------- */
+.site-footer { background: var(--ink); color: #fff; padding: var(--sp-6) var(--sp-4) var(--sp-5); }
+.site-footer__logo { font-family: var(--font-serif); font-size: var(--fs-3xl); font-weight: 700; color: #fff; }
+.site-footer__tag { font-size: var(--fs-md); color: var(--gray-ll); margin-bottom: var(--sp-5); }
+.site-footer__cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5) var(--sp-4); }
+.site-footer__col-title { font-size: var(--fs-md); font-weight: 700; color: var(--rose-line); margin-bottom: var(--sp-2); }
+.site-footer__col a { display: block; font-size: var(--fs-md); color: var(--gray-ll); padding: 4px 0; }
+.site-footer__sns { display: flex; gap: var(--sp-4); font-size: 22px; margin: var(--sp-5) 0 var(--sp-3); color: var(--gray-ll); }
+.site-footer__copy { font-size: var(--fs-sm); color: var(--gray); }

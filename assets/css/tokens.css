@@ -1,0 +1,67 @@
+/* =========================================================
+   amie（アミ）— デザイントークン
+   VI: 女性誌 × エレガント。ロゴはセリフ、本文はゴシック。
+   色は「上品なローズ + ゴールド + 温かいクリーム」。
+   ブランド調整はこのファイルのみ編集すれば全画面へ反映される。
+   ========================================================= */
+:root{
+  /* --- 色 --- */
+  --ink:#2B2320;          /* 温かみのあるチャコール */
+  --ink-soft:#6A5F58;
+  --rose:#D96E8F;         /* アクセント(ローズ) */
+  --rose-deep:#B84E70;
+  --rose-pale:#FBEDF1;
+  --rose-line:#F0D3DC;
+  --gold:#C29A54;         /* プレミアム/認証(ゴールド) */
+  --gold-pale:#F6EEDD;
+  --paper:#FFFFFF;
+  --cream:#FBF7F3;        /* 温かいオフホワイト(カード背景等) */
+  --sand:#F3EBE3;         /* セクション区切りの淡い砂色 */
+  --gray:#8C817A;
+  --gray-l:#A79C93;
+  --gray-ll:#C9BFB6;
+  --line:rgba(43,35,32,0.14);
+  --line-d:rgba(43,35,32,0.30);
+  --bg-outer:#EFE7DF;
+  --overlay:rgba(43,35,32,0.46);
+  /* 各SNSブランド色(フォロワー数表示のアイコン用) */
+  --ig:#E1306C;
+  --tiktok:#010101;
+  --x:#111111;
+  --youtube:#FF0000;
+  --line-green:#06C755;   /* LINEログインボタン専用 */
+
+  /* --- 角丸 --- */
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-xl:24px;
+  --r-pill:999px;
+
+  /* --- 余白(4px基準) --- */
+  --sp-1:4px;
+  --sp-2:8px;
+  --sp-3:12px;
+  --sp-4:16px;
+  --sp-5:24px;
+  --sp-6:32px;
+  --sp-7:48px;
+
+  /* --- タイポグラフィ --- */
+  --font:'Zen Kaku Gothic New',sans-serif;
+  --font-serif:'Playfair Display','Zen Kaku Gothic New',serif;  /* amieロゴ/見出し */
+  --fs-xs:10px;
+  --fs-sm:11px;
+  --fs-md:12px;
+  --fs-base:13px;
+  --fs-lg:14px;
+  --fs-xl:16px;
+  --fs-2xl:20px;
+  --fs-3xl:26px;
+  --ls-wide:2px;
+  --ls-hero:4px;
+
+  /* --- 影(控えめに1段階だけ許可。上品さ優先) --- */
+  --shadow-card:0 1px 3px rgba(43,35,32,0.06);
+  --shadow-pop:0 8px 30px rgba(43,35,32,0.16);
+}

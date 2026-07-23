@@ -1,0 +1,111 @@
+/* S5 購入・決済（前払いエスクローのモック）
+   ?plan= のプランを購入。ビデオは予約枠選択を必須、月額は自動更新の同意。
+   購入完了で注文＋メッセージスレッドを作り、完了画面へ。
+   クエリ読取→api→描画 の3層を守る。 */
+(function () {
+  var esc = function (s) { return App.esc(s); };
+  var h = function (p) { return App.href(p); };
+
+  var SLOTS = [
+    { d: "7/25(金)", t: "20:00" }, { d: "7/26(土)", t: "11:00" }, { d: "7/26(土)", t: "15:00" },
+    { d: "7/27(日)", t: "10:00" }, { d: "7/27(日)", t: "19:00" }, { d: "7/28(月)", t: "21:00" }
+  ];
+  var picked = null;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var main = document.getElementById("main");
+    if (!api.getSession()) { App.goto("login/index.html"); return; }
+    var id = App.qs("plan");
+    api.getPlan(id).then(function (p) {
+      if (!p) { main.innerHTML = UI.empty("プランが見つかりませんでした。", "さがすへ", "search/index.html"); return; }
+      main.innerHTML = form(p);
+      bind(p);
+    });
+  });
+
+  function form(p) {
+    var c = p.creator || {};
+    return (
+      '<div class="section">' +
+      '<p class="section__title">お支払い</p>' +
+
+      '<div class="order-card">' +
+      '<div class="order-card__row"><span>' + esc(p.title) + "</span></div>" +
+      '<div class="order-card__row"><span class="muted">' + esc(c.name) + " / " + esc(UI.formatDetail(p)) + "</span></div>" +
+      '<div class="order-card__row total"><span>お支払い' + (p.format === "monthly" ? "（初月）" : "") + "</span><span>" + App.money(p.price) + "</span></div>" +
+      "</div>" +
+
+      (p.format === "video" ? slotBlock() : "") +
+
+      '<p class="field-label">お支払い方法</p>' +
+      '<div class="pay-mock">' + UI.icon("credit-card") + " Visa •••• 4242（登録済み・モック）<br>※ 実装では Stripe で安全に決済します。5万円超は3Dセキュア必須。</div>" +
+
+      (p.format === "monthly"
+        ? '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);margin-top:16px;">' + UI.icon("refresh") + " 毎月自動更新されます。いつでも解約でき、解約後も現在の請求期間の終わりまでご利用いただけます。</div>"
+        : "") +
+
+      '<label class="consent"><input type="checkbox" id="agree">' +
+      '<span><a href="' + h("terms.html") + '">利用規約</a>・<a href="' + h("tokusho.html") + '">特商法表記</a>' +
+      (p.format === "monthly" ? "、および毎月の自動更新" : "") + "に同意します。</span></label>" +
+
+      '<button class="btn btn--rose btn--block" id="pay" disabled>' + App.money(p.price) + " を支払う</button>" +
+      '<p class="field-note center" style="margin-top:10px;">お支払いは取引完了までamieがお預かりします（エスクロー）。</p>' +
+      "</div>"
+    );
+  }
+
+  function slotBlock() {
+    return (
+      '<p class="field-label">ビデオの予約枠を選択</p>' +
+      '<div class="slot-grid" id="slots">' +
+      SLOTS.map(function (s, i) {
+        return '<button class="slot" type="button" data-i="' + i + '">' + esc(s.d) + "<small>" + esc(s.t) + "</small></button>";
+      }).join("") + "</div>" +
+      '<p class="field-note" style="margin-bottom:16px;">開始24時間前まで無料でキャンセル・日時変更できます。</p>'
+    );
+  }
+
+  function bind(p) {
+    var agree = document.getElementById("agree");
+    var pay = document.getElementById("pay");
+    var slots = document.getElementById("slots");
+
+    function refresh() {
+      var ok = agree.checked && (p.format !== "video" || picked !== null);
+      pay.disabled = !ok;
+    }
+    agree.addEventListener("change", refresh);
+
+    if (slots) {
+      slots.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-i]");
+        if (!b) return;
+        slots.querySelectorAll(".slot").forEach(function (s) { s.classList.remove("is-on"); });
+        b.classList.add("is-on");
+        picked = Number(b.dataset.i);
+        refresh();
+      });
+    }
+
+    pay.addEventListener("click", function () {
+      var opts = {};
+      if (p.format === "video" && picked !== null) opts.slot = SLOTS[picked].d + " " + SLOTS[picked].t;
+      api.purchase(p.id, opts).then(function (order) { done(p, order); });
+    });
+  }
+
+  function done(p, order) {
+    var main = document.getElementById("main");
+    var c = p.creator || {};
+    main.innerHTML =
+      '<div class="done">' +
+      '<div class="done__icon">' + UI.icon("circle-check-filled") + "</div>" +
+      '<p class="done__title">お申し込み完了！</p>' +
+      '<p class="lead">' + esc(c.name) + "さんとのメッセージルームが開きました。" +
+      (p.format === "video" && order.slot ? "<br>予約：" + esc(order.slot) : "") + "</p>" +
+      '<div class="stack" style="margin-top:24px;">' +
+      '<a class="btn btn--rose btn--block" href="' + h("messages/index.html?order=" + order.id) + '">メッセージを開く</a>' +
+      '<a class="btn btn--ghost btn--block" href="' + h("me/index.html") + '">マイページへ</a>' +
+      "</div></div>";
+  }
+})();
