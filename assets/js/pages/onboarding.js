@@ -39,6 +39,15 @@
     window.scrollTo(0, 0);
     if (step === 1) bind1();
     else if (step === 2) bind2();
+    else if (step === 3) bind3();
+  }
+
+  function bind3() {
+    var b = document.getElementById("onb-share");
+    if (b && createdPlan) b.addEventListener("click", function () {
+      App.share({ text: "相談を予約できます", url: App.absUrl("checkout/index.html?plan=" + createdPlan.id + "&ref=you") })
+        .then(function (r) { if (r === "copied") UI.toast("リンクをコピーしました"); else if (r === "shared") UI.toast("シェアしました"); });
+    });
   }
 
   /* 進捗インジケータ */
@@ -251,12 +260,12 @@
 
       '<div class="onb-next">' +
       '<p class="onb-next__h">次の一歩</p>' +
-      nextItem("brand-instagram", "SNSに宣伝リンクをシェア", "ダッシュボードの宣伝リンクをプロフィールやストーリーズへ。ファンを呼び込めます。") +
-      nextItem("layout-grid-add", "プランを増やす", "形式や価格の違うプランを足すほど、相談の入り口が広がります。") +
+      nextItem("share", "SNSでシェアして、最初の相談を受ける", "下のボタンから、あなたのプランのリンクをストーリーズやプロフィールへ。タップした人はそのまま購入できます。") +
+      nextItem("chart-bar", "リンクの成果を見る", "ダッシュボードで、リンクの表示・経由の購入・転換率を確認できます。") +
       "</div>" +
 
-      '<a class="btn btn--rose btn--block" href="' + h("dashboard/index.html") + '">ダッシュボードを見る</a>' +
-      (createdPlan ? '<a class="btn btn--outline btn--block" href="' + h("plans/show.html?id=" + createdPlan.id) + '" style="margin-top:10px;">公開したプランを見る</a>' : "") +
+      (createdPlan ? '<button class="btn btn--rose btn--block" id="onb-share">' + UI.icon("share") + " シェアして最初の相談を受ける</button>" : "") +
+      '<a class="btn btn--outline btn--block" href="' + h("dashboard/index.html") + '" style="margin-top:10px;">ダッシュボードを見る</a>' +
       "</div>"
     );
   }

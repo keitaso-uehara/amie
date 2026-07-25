@@ -12,11 +12,12 @@
       main.innerHTML = UI.empty("ログインして、あなたのページを。", "ログイン / 新規登録", "login/index.html");
       return;
     }
-    Promise.all([api.getMe(), api.getOrders(), api.getFavorites()]).then(function (res) {
-      var me = res[0], orders = res[1], favs = res[2];
+    Promise.all([api.getMe(), api.getOrders(), api.getFavorites(), api.getFollowing()]).then(function (res) {
+      var me = res[0], orders = res[1], favs = res[2], following = res[3];
       main.innerHTML =
         head(me) +
         ordersSection(orders) +
+        followingSection(following) +
         favSection(favs) +
         settings() +
         UI.siteFooter();
@@ -57,6 +58,15 @@
       '<p class="order-item__meta">' + esc(c.name) + (o.slot ? " ・" + esc(o.slot) : "") + "</p></div>" +
       '<span class="status-chip ' + s[1] + '">' + s[0] + "</span></a>" + review +
       "</div>"
+    );
+  }
+
+  function followingSection(list) {
+    if (!list.length) return "";
+    return (
+      '<div class="section hr">' +
+      '<p class="section__title">フォロー中 <span class="muted" style="font-size:13px;font-weight:500;">' + list.length + "人</span></p>" +
+      '<div class="creator-scroll">' + list.map(UI.creatorMini).join("") + "</div></div>"
     );
   }
 

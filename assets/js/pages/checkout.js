@@ -137,6 +137,7 @@
   function done(p, order) {
     var main = document.getElementById("main");
     var c = p.creator || {};
+    var following = api.isFollowing(c.id);
     main.innerHTML =
       '<div class="done">' +
       '<div class="done__icon">' + UI.icon("circle-check-filled") + "</div>" +
@@ -145,7 +146,16 @@
       (p.format === "video" && order.slot ? "<br>予約：" + esc(App.slotLabel(order.slot)) : "") + "</p>" +
       '<div class="stack" style="margin-top:24px;">' +
       '<a class="btn btn--rose btn--block" href="' + h("messages/index.html?order=" + order.id) + '">メッセージを開く</a>' +
+      (following ? "" : '<button class="btn btn--outline btn--block" id="done-follow">' + UI.icon("heart") + " " + esc(c.name) + "さんをフォロー（次回もすぐ相談）</button>") +
       '<a class="btn btn--ghost btn--block" href="' + h("me/index.html") + '">マイページへ</a>' +
       "</div></div>";
+    var fb = document.getElementById("done-follow");
+    if (fb) fb.addEventListener("click", function () {
+      api.toggleFollow(c.id).then(function () {
+        fb.disabled = true;
+        fb.innerHTML = UI.icon("check") + " フォローしました";
+        UI.toast("フォローしました。次回もすぐ相談できます");
+      });
+    });
   }
 })();

@@ -348,6 +348,9 @@
 .share-row__t { flex: 1; font-size: var(--fs-sm); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
 .share-row__t i { color: var(--rose-deep); flex: 0 0 auto; }
 
+/* 出品者フォロー（リピートの土台） */
+.creator-follow { margin-top: var(--sp-3); min-width: 150px; }
+
 /* 出品者の予約枠エディタ */
 .slot-add { display: flex; gap: 8px; align-items: center; }
 .slot-add .field { flex: 1; }

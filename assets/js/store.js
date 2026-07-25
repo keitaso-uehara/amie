@@ -207,6 +207,24 @@ window.api = (function () {
       return Promise.resolve({ plans: plans, creators: creators });
     },
 
+    /* ---------- フォロー(出品者との継続関係・リピート導線の土台) ---------- */
+    toggleFollow: function (creatorId) {
+      var st = getState();
+      st.follows = st.follows || [];
+      var i = st.follows.indexOf(creatorId);
+      if (i === -1) st.follows.push(creatorId); else st.follows.splice(i, 1);
+      setState(st);
+      return Promise.resolve(i === -1);
+    },
+    isFollowing: function (creatorId) { return (getState().follows || []).indexOf(creatorId) !== -1; },
+    getFollowing: function () {
+      var st = getState();
+      var list = (st.follows || []).map(function (id) {
+        return hydrateCreator(allCreators().filter(function (c) { return c.id === id; })[0]);
+      }).filter(Boolean);
+      return Promise.resolve(list);
+    },
+
     /* ---------- 購入(エスクロー預かりのモック) ---------- */
     /* 実装では Stripe で与信→取引完了で capture。ここでは注文レコードを保存し、
        同時にメッセージスレッドを開く(仕様書 S5→S6 の導線)。 */

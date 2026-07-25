@@ -34,6 +34,7 @@
       '<p class="creator-hero__handle">@' + esc(c.handle) + "</p>" +
       '<div class="creator-hero__row">' + UI.typeBadge(c.type) + '<span class="muted">' + esc(c.typeLabel) + "</span></div>" +
       UI.snsFollowers(c) +
+      followBtn(c) +
       '<p class="creator-hero__bio">' + esc(c.bio) + "</p>" +
       (concerns ? '<div class="tag-cloud" style="margin-top:12px;">' + concerns + "</div>" : "") +
       '<div class="creator-stats">' +
@@ -44,6 +45,12 @@
       '<button class="report-link" id="report" type="button">' + UI.icon("flag") + " この出品者を通報する</button>" +
       "</div></div>"
     );
+  }
+
+  function followBtn(c) {
+    var on = api.isFollowing(c.id);
+    return '<button class="btn btn--sm creator-follow ' + (on ? "btn--outline" : "btn--rose") + '" id="follow">' +
+      (on ? UI.icon("check") + " フォロー中" : UI.icon("plus") + " フォロー") + "</button>";
   }
 
   function plansSection(c) {
@@ -65,6 +72,14 @@
   }
 
   function bind(c) {
+    var f = document.getElementById("follow");
+    if (f) f.addEventListener("click", function () {
+      api.toggleFollow(c.id).then(function (on) {
+        f.className = "btn btn--sm creator-follow " + (on ? "btn--outline" : "btn--rose");
+        f.innerHTML = on ? UI.icon("check") + " フォロー中" : UI.icon("plus") + " フォロー";
+        UI.toast(on ? "フォローしました。新着やお知らせが届きます" : "フォローを解除しました");
+      });
+    });
     var r = document.getElementById("report");
     if (r) r.addEventListener("click", function () {
       var ov = UI.openSheet(
