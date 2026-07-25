@@ -80,6 +80,9 @@
 .rank-badge.rank-1 { background: var(--gold); }
 .rank-badge.rank-2 { background: #9AA0A6; }
 .rank-badge.rank-3 { background: #C08457; }
+.rank-group { margin-top: var(--sp-4); }
+.rank-group:first-of-type { margin-top: 0; }
+.rank-group__label { display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-md); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-2); }
 
 /* ELLMIEの説明 */
 .about-band { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-5); text-align: center; }

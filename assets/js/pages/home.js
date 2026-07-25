@@ -8,7 +8,6 @@
 
   var GROUP_CLASS = { "ビューティー": "beauty", "ファッション": "fashion", "ライフスタイル": "life" };
   var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
-  var rkData = [];   // カテゴリ別ランキングのデータ（タブ切替用）
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
@@ -30,7 +29,6 @@
         UI.siteFooter();
       bindSearch();
       bindCategoryTabs();
-      bindRanking();
     });
   });
 
@@ -111,40 +109,29 @@
     );
   }
 
-  /* ⑥ カテゴリ別ランキング（カテゴリをタブで切替、販売数順） */
+  /* ⑥ カテゴリ別ランキング（3グループ縦積み・各グループ横スクロール・もっと見るで下層へ） */
   function rankingSection(plans) {
-    var byCat = {};
-    plans.forEach(function (p) { (byCat[p.category] = byCat[p.category] || []).push(p); });
-    rkData = Object.keys(byCat).map(function (slug) {
-      var t = TAX.categories.filter(function (c) { return c.slug === slug; })[0];
-      return { slug: slug, label: t ? t.label : slug, plans: byCat[slug].sort(function (a, b) { return (b.stats.sales || 0) - (a.stats.sales || 0); }) };
-    }).sort(function (a, b) { return b.plans.length - a.plans.length; }).slice(0, 5);
-    if (!rkData.length) return "";
-    var tabs = rkData.map(function (c, i) {
-      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-rk="' + esc(c.slug) + '">' + esc(c.label) + "</button>";
+    var catGroup = {};
+    TAX.categories.forEach(function (c) { catGroup[c.slug] = c.group; });
+    var byGroup = {};
+    GROUPS.forEach(function (g) { byGroup[g] = []; });
+    plans.forEach(function (p) { var g = catGroup[p.category]; if (byGroup[g]) byGroup[g].push(p); });
+    var blocks = GROUPS.map(function (gname) {
+      var gp = byGroup[gname].sort(function (a, b) { return (b.stats.sales || 0) - (a.stats.sales || 0); });
+      if (!gp.length) return "";
+      return '<div class="rank-group">' +
+        '<p class="rank-group__label">' + esc(gname) +
+        '<a class="more" href="' + h("ranking.html?group=" + encodeURIComponent(gname)) + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
+        '<div class="rank-scroll">' + rankItems(gp) + "</div></div>";
     }).join("");
-    return (
-      '<div class="section">' +
-      '<p class="section__title">カテゴリ別ランキング</p>' +
-      '<div class="cat-tabs" id="rk-tabs">' + tabs + "</div>" +
-      '<div class="rank-scroll" id="rk-list">' + rankItems(rkData[0].plans) + "</div></div>"
-    );
+    if (!blocks) return "";
+    return '<div class="section"><p class="section__title">カテゴリ別ランキング</p>' + blocks + "</div>";
   }
   /* サムネイル付きカード＋順位バッジ（ココナラ式） */
   function rankItems(plans) {
     return plans.slice(0, 6).map(function (p, i) {
       return '<div class="rank-item"><span class="rank-badge rank-' + (i + 1) + '">' + (i + 1) + "</span>" + UI.planCard(p) + "</div>";
     }).join("");
-  }
-  function bindRanking() {
-    var tabs = document.getElementById("rk-tabs");
-    if (!tabs) return;
-    tabs.addEventListener("click", function (e) {
-      var b = e.target.closest("[data-rk]"); if (!b) return;
-      Array.prototype.forEach.call(tabs.querySelectorAll(".cat-tab"), function (x) { x.classList.toggle("is-on", x === b); });
-      var d = rkData.filter(function (x) { return x.slug === b.dataset.rk; })[0];
-      if (d) document.getElementById("rk-list").innerHTML = rankItems(d.plans);
-    });
   }
 
   /* ⑦ ELLMIEの説明 */
