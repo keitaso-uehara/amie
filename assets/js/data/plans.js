@@ -89,3 +89,37 @@ window.DB.plans = [
     desc: "転職・復職・独立で迷っているあなたと、これまでの経験を一緒に言語化。次の一歩を決めるための60分です。",
     stats: { rating: 4.9, sales: 88 } }
 ];
+
+/* デモ用：全カテゴリを各10件まで埋める（ランキングを共同制作者がイメージしやすいように）。
+   TAX / window.DB.creators はこのファイルより前に読み込まれる。 */
+(function () {
+  if (!window.TAX || !window.TAX.categories) return;
+  var creators = (window.DB.creators || []).map(function (c) { return c.id; });
+  if (!creators.length) return;
+  var TT = ["{L}のお悩み相談", "{L}を写真で添削", "{L}マンツーマンレッスン", "あなた専用・{L}アドバイス",
+            "{L}の始め方サポート", "{L}お試し相談", "プロが教える{L}のコツ", "{L}なんでも相談",
+            "{L}集中レッスン", "{L}の型づくり伴走"];
+  var PRICES = [3000, 5000, 2000, 8000, 4000, 6000, 2500, 12000, 3500, 9000];
+  var FORMATS = ["chat", "video", "monthly", "chat", "video", "chat", "monthly", "video", "chat", "chat"];
+  window.TAX.categories.forEach(function (cat, ci) {
+    var have = window.DB.plans.filter(function (p) { return p.category === cat.slug; }).length;
+    for (var i = have; i < 10; i++) {
+      var fmt = FORMATS[i % FORMATS.length];
+      var p = {
+        id: "pg_" + cat.slug + "_" + i,
+        creatorId: creators[(ci + i) % creators.length],
+        title: TT[i % TT.length].replace("{L}", cat.label),
+        format: fmt,
+        price: PRICES[(ci + i) % PRICES.length],
+        category: cat.slug,
+        concerns: [],
+        desc: cat.label + "に関するご相談に、あなたのペースで丁寧にお応えします。（デモ用サンプル）",
+        stats: { rating: Math.round((5.0 - (i % 5) * 0.1) * 10) / 10, sales: Math.max(4, 250 - i * 22 - (ci % 3) * 6) }
+      };
+      if (fmt === "chat") p.chatDays = 7;
+      if (fmt === "video") p.minutes = 60;
+      if (fmt === "monthly") { p.monthlyVideos = 1; p.chatIncluded = true; }
+      window.DB.plans.push(p);
+    }
+  });
+})();
