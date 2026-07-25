@@ -9,21 +9,28 @@
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
     if (!api.getSession()) { main.innerHTML = UI.empty("ログインすると出品者ダッシュボードが使えます。", "ログイン", "login/index.html"); return; }
-    // サンプル実績は注目トップ出品者を動的に取得（固定IDに依存しない）
-    api.getFeaturedCreators(1).then(function (top) {
-      return Promise.all([top[0] ? api.getCreator(top[0].id) : Promise.resolve(null), api.getMyPlans(), api.getMySeller()]);
-    }).then(function (res) {
-      var sample = res[0] || { plans: [], stats: { rating: 0 }, name: "", handle: "creator" }, myPlans = res[1] || [], mySeller = res[2];
+    Promise.all([
+      api.getMySeller(), api.getMyPlans(), api.getSellerBalance(),
+      api.getSellerOrders(), api.getPayouts(), api.getFeaturedCreators(1)
+    ]).then(function (res) {
+      var mySeller = res[0], myPlans = res[1] || [], bal = res[2] || { available: 0, pending: 0 };
+      var sellerOrders = res[3] || [], payouts = res[4] || [], top = res[5] || [];
       if (!mySeller) { main.innerHTML = notSellerYet() + UI.siteFooter(); return; }
-      main.innerHTML =
-        head(mySeller) +
-        cards(mySeller) +
-        limitBox() +
-        myPlansSection(myPlans, mySeller) +
-        sampleSection(sample) +
-        promoSection(mySeller) +
-        UI.siteFooter();
-      bind(mySeller);
+      var sampleP = top[0] ? api.getCreator(top[0].id) : Promise.resolve(null);
+      sampleP.then(function (sample) {
+        sample = sample || { plans: [], stats: { rating: 0 }, name: "", handle: "creator" };
+        main.innerHTML =
+          head(mySeller, bal) +
+          cards(mySeller, bal, sellerOrders) +
+          payoutSection(bal, payouts) +
+          bookingsSection(sellerOrders) +
+          limitBox() +
+          myPlansSection(myPlans, mySeller) +
+          sampleSection(sample) +
+          promoSection(mySeller) +
+          UI.siteFooter();
+        bind(mySeller, bal);
+      });
     });
   });
 
@@ -55,28 +62,76 @@
     );
   }
 
-  function head(seller) {
+  function head(seller, bal) {
     return (
       '<div class="dash-head">' +
       '<p class="dash-head__label">' + UI.icon("sparkles") + " 出品者ダッシュボード</p>" +
-      '<p class="dash-sales">' + App.money(0) + "<small>" + esc(seller.name) + "さんの今月の受取見込み</small></p>" +
-      '<p class="dash-head__label" style="margin-top:6px;">売上が発生すると、手数料20%を引いた受取額がここに表示されます。</p>' +
+      '<p class="dash-sales">' + App.money(bal.available) + "<small>" + esc(seller.name) + "さんの受取可能額</small></p>" +
+      '<p class="dash-head__label" style="margin-top:6px;">確定待ち ' + App.money(bal.pending) + "（取引完了後に受取可能・手数料20%控除後）</p>" +
       "</div>"
     );
   }
 
-  function cards(seller) {
+  function cards(seller, bal, orders) {
+    var active = orders.filter(function (o) { return o.status === "progress" || o.status === "active"; }).length;
     var rating = seller.stats && seller.stats.rating ? seller.stats.rating : "—";
     return (
       '<div class="dash-cards">' +
-      card(App.money(0), "確定待ち(エスクロー)") +
-      card("0", "取引中") +
+      card(App.money(bal.pending), "確定待ち(エスクロー)") +
+      card(String(active), "取引中") +
       card("0", "未返信メッセージ") +
       card(rating, "平均評価") +
       "</div>"
     );
   }
   function card(v, l) { return '<div class="dash-card"><p class="dash-card__v">' + esc(String(v)) + '</p><p class="dash-card__l">' + esc(l) + "</p></div>"; }
+
+  /* 出金（受取可能額・出金申請・売上明細CSV/PDF・履歴） */
+  function payoutSection(bal, payouts) {
+    var canWithdraw = bal.available > 0;
+    var hist = payouts.length
+      ? '<div class="payout-hist">' + payouts.slice(0, 3).map(function (w) {
+          return '<div class="payout-hist__row"><span>' + esc(w.date) + (w.express ? " ・お急ぎ" : "") + "</span><span>" + App.money(w.net) + "（" + esc(w.eta) + "着金）</span></div>";
+        }).join("") + "</div>"
+      : "";
+    return (
+      '<div class="section hr">' +
+      '<p class="section__title">出金</p>' +
+      '<div class="payout-box">' +
+      '<p class="payout-box__amt">' + App.money(bal.available) + "<small>受取可能額</small></p>" +
+      '<button class="btn btn--gold btn--block" id="withdraw"' + (canWithdraw ? "" : " disabled") + ">出金を申請する</button>" +
+      (canWithdraw ? "" : '<p class="field-note" style="text-align:center;">取引が完了すると出金できます。</p>') +
+      "</div>" +
+      '<div class="stack2" style="margin-top:12px;">' +
+      '<button class="btn btn--outline btn--sm" id="csv">' + UI.icon("download") + " 売上明細CSV</button>" +
+      '<button class="btn btn--outline btn--sm" id="pdf">' + UI.icon("file-text") + " 明細PDF</button>" +
+      "</div>" + hist +
+      "</div>"
+    );
+  }
+
+  /* 予約・取引の管理（出品者として。中止＝全額返金／完了） */
+  function bookingsSection(orders) {
+    if (!orders.length) return "";
+    var LABEL = { progress: "進行中", active: "契約中", completed: "完了", canceled: "返金済み" };
+    return (
+      '<div class="section hr">' +
+      '<p class="section__title">予約・取引の管理</p>' +
+      orders.map(function (o) {
+        var acts = "";
+        if (o.status === "progress" || o.status === "active") acts += '<button class="btn btn--sm btn--ghost" data-cancel="' + esc(o.id) + '">中止（全額返金）</button>';
+        if (o.status === "progress" && o.format !== "monthly") acts += '<button class="btn btn--sm btn--outline" data-scomplete="' + esc(o.id) + '">完了にする</button>';
+        return (
+          '<div class="admin-row"><div class="admin-row__body">' +
+          '<p class="admin-row__title">' + esc(o.plan ? o.plan.title : "(プラン)") + "</p>" +
+          '<p class="admin-row__meta">' + esc(LABEL[o.status] || o.status) +
+          (o.slot ? " ・" + esc(App.slotLabel(o.slot)) : "") + " ・" + App.money(o.price) + "</p></div>" +
+          '<div class="admin-row__acts">' + acts + "</div></div>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
 
   function limitBox() {
     return (
@@ -113,13 +168,105 @@
     );
   }
 
-  function bind(mySeller) {
+  function bind(mySeller, bal) {
     var copy = document.getElementById("copy");
     if (copy) copy.addEventListener("click", function () { UI.toast("宣伝リンクをコピーしました"); });
     var lm = document.getElementById("limit");
     if (lm) lm.addEventListener("click", function () { UI.toast("本人確認（eKYC）を開始します。確認後、価格上限が解除されます。"); });
     var es = document.getElementById("edit-seller");
     if (es) es.addEventListener("click", function () { openSellerEdit(mySeller); });
+    var wb = document.getElementById("withdraw");
+    if (wb) wb.addEventListener("click", function () { openWithdraw(bal); });
+    var csv = document.getElementById("csv");
+    if (csv) csv.addEventListener("click", downloadCSV);
+    var pdf = document.getElementById("pdf");
+    if (pdf) pdf.addEventListener("click", openStatementPDF);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-cancel]"), function (b) {
+      b.addEventListener("click", function () { sellerCancel(b.dataset.cancel); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-scomplete]"), function (b) {
+      b.addEventListener("click", function () {
+        api.completeOrder(b.dataset.scomplete).then(function () { UI.toast("完了にしました"); setTimeout(function () { location.reload(); }, 500); });
+      });
+    });
+  }
+
+  /* 出金申請（通常／お急ぎ3営業日+3%） */
+  function openWithdraw(bal) {
+    var ov = UI.openSheet(
+      '<p class="sheet__q">出金を申請</p>' +
+      '<p class="lead" style="margin-bottom:14px;">受取可能額 <b>' + App.money(bal.available) + "</b> から出金します。振込先の口座は設定済みが前提です。</p>" +
+      '<label class="field-label">金額</label><input class="field" id="w-amt" type="number" inputmode="numeric" value="' + bal.available + '" max="' + bal.available + '">' +
+      '<label class="consent" style="margin-top:14px;"><input type="checkbox" id="w-exp"><span>お急ぎ振込（申請から3営業日以内・手数料+3%）</span></label>' +
+      '<button class="btn btn--gold btn--block" id="w-go" style="margin-top:14px;">申請する</button>'
+    );
+    ov.querySelector("#w-go").addEventListener("click", function () {
+      var amt = Number(ov.querySelector("#w-amt").value);
+      var exp = ov.querySelector("#w-exp").checked;
+      if (!amt || amt < 1) return UI.toast("金額を入力してください");
+      if (amt > bal.available) return UI.toast("受取可能額を超えています");
+      api.requestPayout(amt, exp).then(function (r) {
+        UI.closeSheet();
+        UI.toast("出金を申請しました（受取 " + App.money(r.net) + (r.fee ? "・手数料 " + App.money(r.fee) : "") + "）");
+        setTimeout(function () { location.reload(); }, 700);
+      });
+    });
+  }
+
+  /* 売上明細CSV（Excel対応BOM付き・確定申告用） */
+  function downloadCSV() {
+    api.getSalesRows().then(function (rows) {
+      if (!rows.length) { UI.toast("明細がありません"); return; }
+      var head = ["日付", "プラン", "形式", "売上(税込)", "手数料", "受取", "状態"];
+      var lines = [head.join(",")].concat(rows.map(function (r) {
+        return [r.date, '"' + String(r.title).replace(/"/g, '""') + '"', r.format, r.gross, r.fee, r.net, r.status].join(",");
+      }));
+      var csv = "﻿" + lines.join("\r\n");
+      var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "ELLMIE_売上明細.csv";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      UI.toast("CSVをダウンロードしました");
+    });
+  }
+
+  /* 売上明細PDF（印刷ダイアログ→PDF保存。宛名入り・支払調書なし明記） */
+  function openStatementPDF() {
+    Promise.all([api.getSalesRows(), api.getMySeller()]).then(function (res) {
+      var rows = res[0], seller = res[1] || {};
+      if (!rows.length) { UI.toast("明細がありません"); return; }
+      var tot = rows.reduce(function (s, r) { return { gross: s.gross + r.gross, fee: s.fee + r.fee, net: s.net + r.net }; }, { gross: 0, fee: 0, net: 0 });
+      var html =
+        '<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>売上明細書 - ELLMIE</title>' +
+        "<style>body{font-family:'Hiragino Sans',sans-serif;padding:32px;color:#2b2320;}h1{font-size:20px;margin:0 0 4px;}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px;}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;}.n{text-align:right;}.tot td{font-weight:700;border-top:2px solid #999;}.note{margin-top:16px;font-size:12px;color:#888;}</style></head><body>" +
+        "<h1>売上明細書</h1><p>宛名：" + esc(seller.name || "") + " 様　／　発行：ELLMIE</p>" +
+        '<table><thead><tr><th>日付</th><th>プラン</th><th>形式</th><th class="n">売上(税込)</th><th class="n">手数料</th><th class="n">受取</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          return "<tr><td>" + esc(r.date) + "</td><td>" + esc(r.title) + "</td><td>" + esc(r.format) + '</td><td class="n">' + App.money(r.gross) + '</td><td class="n">' + App.money(r.fee) + '</td><td class="n">' + App.money(r.net) + "</td></tr>";
+        }).join("") +
+        '<tr class="tot"><td colspan="3">合計</td><td class="n">' + App.money(tot.gross) + '</td><td class="n">' + App.money(tot.fee) + '</td><td class="n">' + App.money(tot.net) + "</td></tr>" +
+        '</tbody></table><p class="note">※ 支払調書は発行されません（源泉徴収なし・事業所得としてご申告ください）。</p>' +
+        "<scr" + "ipt>window.onload=function(){window.print();}</scr" + "ipt></body></html>";
+      var w = window.open("", "_blank");
+      if (!w) { UI.toast("ポップアップを許可してください"); return; }
+      w.document.write(html); w.document.close();
+    });
+  }
+
+  /* 出品者都合の中止（全額返金） */
+  function sellerCancel(orderId) {
+    var ov = UI.openSheet(
+      '<p class="sheet__q">この取引を中止しますか？</p>' +
+      '<p class="lead" style="margin-bottom:18px;">出品者都合の中止です。購入者へ全額返金し、おわびの通知が送られます。</p>' +
+      '<button class="btn btn--rose btn--block" id="sc-go">中止して全額返金</button>' +
+      '<button class="btn btn--ghost btn--block" id="sc-no" style="margin-top:10px;">やめる</button>'
+    );
+    ov.querySelector("#sc-go").addEventListener("click", function () {
+      api.cancelOrder(orderId, { by: "seller" }).then(function () { UI.closeSheet(); UI.toast("中止し、全額返金しました"); setTimeout(function () { location.reload(); }, 600); });
+    });
+    ov.querySelector("#sc-no").addEventListener("click", UI.closeSheet);
   }
 
   /* S15 出品者プロフィール編集 */

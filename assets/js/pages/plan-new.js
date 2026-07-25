@@ -57,6 +57,7 @@
       return '<label class="field-label">ビデオ通話の長さ</label><select class="field" id="minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option></select>' +
         '<label class="field-label" style="margin-top:14px;">予約可能な開始枠 <span class="muted">（15分刻み・任意）</span></label>' +
         '<div class="slot-add"><input class="field" type="datetime-local" id="slot-input" step="900"><button type="button" class="btn btn--outline btn--sm" id="slot-add">追加</button></div>' +
+        '<button type="button" class="btn btn--ghost btn--sm" id="slot-week" style="margin-top:8px;">＋ この時間を毎週4週ぶん追加</button>' +
         '<div class="slot-chips" id="slot-chips"></div>' +
         '<p class="field-note">購入者はここで選んだ枠から予約します。空のままなら、購入後にメッセージで日程を調整します。</p>';
     return '<label class="field-label">月のビデオ回数</label><select class="field" id="monthlyVideos"><option value="0">0回（チャットのみ）</option><option value="1">月1回</option><option value="2" selected>月2回</option><option value="4">月4回</option></select>';
@@ -83,6 +84,14 @@
       slots.push(v); slots.sort();
       renderSlotChips();
       inp.value = "";
+    });
+    var wk = document.getElementById("slot-week");
+    if (wk) wk.addEventListener("click", function () {
+      var inp = document.getElementById("slot-input");
+      var v = inp.value;
+      if (!v) return UI.toast("日時を選んでください");
+      for (var i = 0; i < 4; i++) { var nv = App.addWeeks(v, i); if (slots.indexOf(nv) === -1) slots.push(nv); }
+      slots.sort(); renderSlotChips(); inp.value = "";
     });
   }
 

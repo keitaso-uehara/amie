@@ -121,6 +121,8 @@
       btns.push('<button class="btn btn--sm btn--outline" id="tip">' + UI.icon("coin") + " 追加で支払う</button>");
     if (o.status === "progress" && o.format !== "monthly")
       btns.push('<button class="btn btn--sm btn--ghost" id="complete">取引を完了する</button>');
+    if (o.status === "progress" || o.status === "active")
+      btns.push('<button class="btn btn--sm btn--ghost" id="cancel">キャンセル・返金</button>');
     if (o.reviewable)
       btns.push('<a class="btn btn--sm btn--outline" href="' + h("review/index.html?order=" + o.id) + '">レビューを書く</a>');
     if (!btns.length) return "";
@@ -135,6 +137,67 @@
     if (r) r.addEventListener("click", function () { openReschedule(o); });
     var t = document.getElementById("tip");
     if (t) t.addEventListener("click", function () { openTip(o); });
+    var cn = document.getElementById("cancel");
+    if (cn) cn.addEventListener("click", function () { openCancel(o); });
+  }
+
+  /* キャンセル・返金。形式と締切で挙動を分岐(ストアカ/ココナラ準拠) */
+  function doCancel(o, opts) {
+    api.cancelOrder(o.id, opts).then(function () {
+      UI.closeSheet(); UI.toast("返金を受け付けました");
+      setTimeout(function () { location.reload(); }, 600);
+    });
+  }
+  function wireCancel(ov, o, opts) {
+    ov.querySelector("#c-go").addEventListener("click", function () { doCancel(o, opts); });
+    ov.querySelector("#c-no").addEventListener("click", UI.closeSheet);
+  }
+  function openCancel(o) {
+    // 月額の解約
+    if (o.status === "active") {
+      var ovM = UI.openSheet(
+        '<p class="sheet__q">月額を解約しますか？</p>' +
+        '<p class="lead" style="margin-bottom:18px;">次回更新を停止します。今の請求期間の終わりまではご利用いただけます（日割り返金なし）。</p>' +
+        '<button class="btn btn--rose btn--block" id="c-go">解約する</button>' +
+        '<button class="btn btn--ghost btn--block" id="c-no" style="margin-top:10px;">やめる</button>'
+      );
+      ovM.querySelector("#c-go").addEventListener("click", function () {
+        api.cancelSubscription(o.id).then(function () { UI.closeSheet(); UI.toast("解約しました"); setTimeout(function () { location.reload(); }, 500); });
+      });
+      ovM.querySelector("#c-no").addEventListener("click", UI.closeSheet);
+      return;
+    }
+    // ビデオ：24時間前まで無料キャンセル。過ぎたらノーショー返金のみ
+    if (o.format === "video" && o.slot) {
+      var hrs = (new Date(o.slot) - new Date()) / 3600000;
+      if (hrs > 24) {
+        var ovV = UI.openSheet(
+          '<p class="sheet__q">キャンセル・返金</p>' +
+          '<p class="lead" style="margin-bottom:18px;">開始24時間前まで、無料でキャンセルできます。お支払いは全額返金されます。</p>' +
+          '<button class="btn btn--rose btn--block" id="c-go">キャンセルする（全額返金）</button>' +
+          '<button class="btn btn--ghost btn--block" id="c-no" style="margin-top:10px;">やめる</button>'
+        );
+        wireCancel(ovV, o, {});
+        return;
+      }
+      var ovN = UI.openSheet(
+        '<p class="sheet__q">キャンセル・返金</p>' +
+        '<p class="lead" style="margin-bottom:16px;">開始24時間前を過ぎたため、通常キャンセルはできません。相手が現れない場合は、開始時刻から15分の猶予ののち返金を申請できます。日時の変更をご希望なら「日時を変更」もご利用ください。</p>' +
+        '<button class="btn btn--rose btn--block" id="c-ns">相手が来ない・返金を申請</button>' +
+        '<button class="btn btn--ghost btn--block" id="c-no" style="margin-top:10px;">閉じる</button>'
+      );
+      ovN.querySelector("#c-ns").addEventListener("click", function () { doCancel(o, { reason: "noshow" }); });
+      ovN.querySelector("#c-no").addEventListener("click", UI.closeSheet);
+      return;
+    }
+    // チャット：48時間無応答なら全額返金
+    var ovC = UI.openSheet(
+      '<p class="sheet__q">返金を申請</p>' +
+      '<p class="lead" style="margin-bottom:18px;">出品者が48時間以内に一度も応答しない場合、全額返金されます。今すぐ申請しますか？（応答があった取引は完了までキャンセルできません）</p>' +
+      '<button class="btn btn--rose btn--block" id="c-go">返金を申請する</button>' +
+      '<button class="btn btn--ghost btn--block" id="c-no" style="margin-top:10px;">やめる</button>'
+    );
+    wireCancel(ovC, o, {});
   }
 
   /* 予約日時の変更(1回まで) */

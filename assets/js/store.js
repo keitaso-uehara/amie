@@ -223,6 +223,16 @@ window.api = (function () {
       st.threads[order.id] = [
         { from: "creator", body: "ご購入ありがとうございます！さっそくよろしくお願いします。", timeLabel: "たった今" }
       ];
+      // 予約リマインド通知(ビデオ・実装では開始24h前/直前にcronで再送)
+      if (order.format === "video" && order.slot) {
+        st.myNotifications = st.myNotifications || [];
+        var cName = (allCreators().filter(function (c) { return c.id === plan.creatorId; })[0] || {}).name || "出品者";
+        st.myNotifications.unshift({
+          id: "n_local_" + st.seq, type: "booking", actorId: plan.creatorId,
+          title: cName + "さんとのビデオ予約が確定しました（" + (window.App ? App.slotLabel(order.slot) : order.slot) + "）",
+          date: "たった今", read: false
+        });
+      }
       setState(st);
       return Promise.resolve(order);
     },
@@ -279,6 +289,95 @@ window.api = (function () {
       st.threads[orderId].push({ from: "me", body: (label || "追加のお支払い") + "（+¥" + amount.toLocaleString("ja-JP") + "）を購入しました", timeLabel: "たった今", read: true });
       setState(st);
       return Promise.resolve({ ok: true });
+    },
+
+    /* 取引のキャンセル/返金。締切前は購入者が自由に、出品者都合は全額返金(ストアカ準拠)。UI側で締切を判定 */
+    cancelOrder: function (orderId, opts) {
+      opts = opts || {};
+      var st = getState();
+      var done = null;
+      st.orders.forEach(function (o) {
+        if (o.id === orderId && (o.status === "progress" || o.status === "active")) {
+          o.status = "canceled";
+          var addons = (o.addons || []).reduce(function (s, a) { return s + (a.amount || 0); }, 0);
+          o.refund = { amount: (o.price || 0) + addons, reason: opts.reason || "cancel", by: opts.by || "buyer", date: "たった今" };
+          done = o;
+        }
+      });
+      if (done) {
+        st.threads[orderId] = st.threads[orderId] || [];
+        var msg = opts.by === "seller"
+          ? "出品者都合により中止しました。お支払いは全額返金されます。"
+          : opts.reason === "noshow"
+            ? "相手が現れなかったため、返金を受け付けました。全額返金されます。"
+            : "この取引をキャンセルしました。全額返金されます。";
+        st.threads[orderId].push({ from: "creator", body: msg, timeLabel: "たった今" });
+      }
+      setState(st);
+      return Promise.resolve(done ? clone(done) : null);
+    },
+
+    /* ---------- 出品者の入金・出金(8.2/8.3) ---------- */
+    /* 受取残高。手数料20%控除後。completed=受取可能 / progress・active=確定待ち。canceledは除外 */
+    getSellerBalance: function () {
+      var st = getState();
+      var meId = st.mySeller ? st.mySeller.id : null;
+      var available = 0, pending = 0, gross = 0;
+      if (meId) {
+        st.orders.forEach(function (o) {
+          if (o.creatorId !== meId || o.status === "canceled") return;
+          var addons = (o.addons || []).reduce(function (s, a) { return s + (a.amount || 0); }, 0);
+          var total = (o.price || 0) + addons;
+          gross += total;
+          var net = Math.round(total * 0.8);
+          if (o.status === "completed") available += net; else pending += net;
+        });
+      }
+      var withdrawn = (st.withdrawals || []).reduce(function (s, w) { return s + (w.amount || 0); }, 0);
+      return Promise.resolve({ available: Math.max(0, available - withdrawn), pending: pending, gross: gross });
+    },
+    /* 出金申請。お急ぎ=3営業日以内・手数料+3%(8.3)。通常は無料 */
+    requestPayout: function (amount, express) {
+      var st = getState();
+      amount = Number(amount) || 0;
+      var fee = express ? Math.round(amount * 0.03) : 0;
+      st.withdrawals = st.withdrawals || [];
+      st.withdrawals.push({ amount: amount, fee: fee, express: !!express, net: amount - fee, date: "たった今", eta: express ? "3営業日以内" : "翌月末" });
+      setState(st);
+      return Promise.resolve({ ok: true, net: amount - fee, fee: fee });
+    },
+    getPayouts: function () { return Promise.resolve((getState().withdrawals || []).slice().reverse()); },
+    /* 売上明細(確定申告用・CSV/PDF出力元)。宛名は出品者名 */
+    getSalesRows: function () {
+      var st = getState();
+      var meId = st.mySeller ? st.mySeller.id : null;
+      var rows = [];
+      if (meId) {
+        st.orders.forEach(function (o) {
+          if (o.creatorId !== meId) return;
+          var plan = allPlans().filter(function (p) { return p.id === o.planId; })[0] || {};
+          var addons = (o.addons || []).reduce(function (s, a) { return s + (a.amount || 0); }, 0);
+          var total = (o.price || 0) + addons;
+          rows.push({
+            date: o.createdLabel || "", title: plan.title || "(プラン)", format: o.format,
+            gross: total, fee: Math.round(total * 0.2), net: Math.round(total * 0.8), status: o.status
+          });
+        });
+      }
+      return Promise.resolve(rows);
+    },
+
+    /* 出品者としての予約・取引一覧(自分が出品したプランへの注文) */
+    getSellerOrders: function () {
+      var st = getState();
+      var meId = st.mySeller ? st.mySeller.id : null;
+      if (!meId) return Promise.resolve([]);
+      var list = st.orders.filter(function (o) { return o.creatorId === meId; }).map(function (o) {
+        var out = clone(o);
+        out.plan = hydratePlan(allPlans().filter(function (p) { return p.id === o.planId; })[0]);
+        return out;
+      }).reverse();
+      return Promise.resolve(list);
     },
 
     /* ---------- メッセージ(取引スレッド) ---------- */
@@ -380,7 +479,8 @@ window.api = (function () {
     /* ---------- 通知 ---------- */
     getNotifications: function () {
       var st = getState();
-      var list = clone(window.DB.notifications);
+      var mine = (st.myNotifications || []).map(function (n) { return clone(n); });
+      var list = mine.concat(clone(window.DB.notifications));
       list.forEach(function (n) {
         if (st.read.indexOf(n.id) !== -1) n.read = true;
         n.actor = n.actorId ? (allCreators().filter(function (c) { return c.id === n.actorId; })[0] || null) : null;
@@ -400,7 +500,7 @@ window.api = (function () {
     },
     markAllNotificationsRead: function () {
       var st = getState();
-      (window.DB.notifications || []).forEach(function (n) { if (st.read.indexOf(n.id) === -1) st.read.push(n.id); });
+      (st.myNotifications || []).concat(window.DB.notifications || []).forEach(function (n) { if (st.read.indexOf(n.id) === -1) st.read.push(n.id); });
       setState(st);
       return Promise.resolve();
     },

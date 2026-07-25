@@ -26,6 +26,15 @@ window.App = (function () {
     var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
     return (d.getMonth() + 1) + "/" + d.getDate() + "(" + _WD[d.getDay()] + ") " + m[4] + ":" + m[5];
   }
+  /* datetime-local文字列を n 週間後にずらして返す(週次くり返し枠用) */
+  function addWeeks(v, n) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(v));
+    if (!m) return v;
+    var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    d.setDate(d.getDate() + n * 7);
+    var p = function (x) { return (x < 10 ? "0" : "") + x; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
 
   document.addEventListener("DOMContentLoaded", function () {
     var topbarEl = document.getElementById("topbar");
@@ -68,5 +77,5 @@ window.App = (function () {
     }
   }
 
-  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel };
+  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks };
 })();

@@ -321,6 +321,15 @@
 /* 通話のサブ注記 */
 .call__note--sub { opacity: 0.85; font-size: 12px; }
 
+/* 出金 */
+.payout-box { background: var(--cream); border-radius: var(--r-lg); padding: var(--sp-4); text-align: center; }
+.payout-box__amt { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; color: var(--rose-deep); margin-bottom: var(--sp-3); }
+.payout-box__amt small { display: block; font-size: 12px; font-weight: 500; color: var(--gray); margin-top: 2px; }
+.stack2 { display: flex; gap: 8px; }
+.stack2 .btn { flex: 1; }
+.payout-hist { margin-top: 14px; }
+.payout-hist__row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--ink-soft); padding: 6px 2px; border-bottom: 1px solid var(--sand); }
+
 /* ---------- S9 レビュー: 星入力 ---------- */
 .star-input { display: flex; gap: 6px; }
 .star-input button { font-size: 34px; color: var(--gray-ll); }
