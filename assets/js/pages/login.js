@@ -10,7 +10,7 @@
     var next = App.qs("next");
     main.innerHTML =
       '<div class="login">' +
-      '<p class="login__logo">amie</p>' +
+      '<p class="login__logo">ELLMIE</p>' +
       '<p class="login__copy">憧れの人が、そばに。</p>' +
       '<p class="login__sub">メイク・美容・ファッション・暮らしを、憧れの人に直接相談。</p>' +
 
@@ -37,7 +37,7 @@
 
     function finish() {
       api.login().then(function () {
-        UI.toast("ようこそ、amieへ");
+        UI.toast("ようこそ、ELLMIEへ");
         setTimeout(function () { App.goto(next ? decodeURIComponent(next) : "index.html"); }, 500);
       });
     }

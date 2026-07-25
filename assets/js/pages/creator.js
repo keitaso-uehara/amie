@@ -10,7 +10,7 @@
     var id = App.qs("id");
     api.getCreator(id).then(function (c) {
       if (!c) { main.innerHTML = UI.empty("出品者が見つかりませんでした。", "さがすへ", "search/index.html"); return; }
-      document.title = c.name + " | amie";
+      document.title = c.name + " | ELLMIE";
       main.innerHTML =
         hero(c) +
         plansSection(c) +

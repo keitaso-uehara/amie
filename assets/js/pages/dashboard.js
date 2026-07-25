@@ -87,7 +87,7 @@
   }
 
   function promoSection(c) {
-    var url = "https://amie.app/@" + c.handle;
+    var url = "https://ellmie.com/@" + c.handle;
     return (
       '<div class="section hr">' +
       '<p class="section__title">宣伝リンク</p>' +

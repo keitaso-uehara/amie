@@ -78,7 +78,7 @@ window.UI = (function () {
     if (document.body.dataset.page === "home") {
       return (
         '<button class="topbar__icon" id="nav-menu" type="button" aria-label="メニュー">' + icon("menu-2") + "</button>" +
-        '<a class="topbar__logo" href="' + h("index.html") + '">amie</a>' +
+        '<a class="topbar__logo" href="' + h("index.html") + '">ELLMIE</a>' +
         '<span class="topbar__right">' +
         '<button class="topbar__icon topbar__icon--bell" id="nav-notif" type="button" aria-label="通知">' +
         icon("bell") + '<span class="topbar__dot" id="notif-dot" hidden></span></button>' +
@@ -87,7 +87,7 @@ window.UI = (function () {
     }
     return (
       '<button class="topbar__back" id="nav-back" type="button" aria-label="戻る">' + icon("chevron-left") + "</button>" +
-      '<a class="topbar__logo topbar__logo--center" href="' + h("index.html") + '">amie</a>' +
+      '<a class="topbar__logo topbar__logo--center" href="' + h("index.html") + '">ELLMIE</a>' +
       '<span class="topbar__user">' + right + "</span>"
     );
   }
@@ -222,7 +222,7 @@ window.UI = (function () {
       ["メッセージ", "messages/index.html"],
       ["マイページ", "me/index.html"],
       ["出品者ダッシュボード", "dashboard/index.html"],
-      ["amieとは", "about.html"],
+      ["ELLMIEとは", "about.html"],
       ["出品者ガイド", "guide.html"],
       ["ヘルプ", "help.html"],
       ["ログイン / 新規登録", "login/index.html"]
@@ -232,7 +232,7 @@ window.UI = (function () {
     ov.className = "drawer";
     ov.innerHTML =
       '<div class="drawer__panel">' +
-      '<div class="drawer__head"><span class="drawer__logo">amie</span>' +
+      '<div class="drawer__head"><span class="drawer__logo">ELLMIE</span>' +
       '<button class="drawer__x" type="button" id="menu-close" aria-label="閉じる">' + icon("x") + "</button></div>" +
       '<nav class="menu-list">' + links.map(function (l) {
         return '<a href="' + h(l[1]) + '">' + esc(l[0]) + icon("chevron-right") + "</a>";
@@ -254,16 +254,16 @@ window.UI = (function () {
   function siteFooter() {
     return (
       '<footer class="site-footer">' +
-      '<p class="site-footer__logo">amie</p>' +
+      '<p class="site-footer__logo">ELLMIE</p>' +
       '<p class="site-footer__tag">憧れの人が、そばに。</p>' +
       '<div class="site-footer__cols">' +
       footerCol("さがす", [["カテゴリから探す", "search/index.html"], ["出品者一覧", "search/index.html?tab=creators"]]) +
       footerCol("使う", [["ログイン / 新規登録", "login/index.html"], ["マイページ", "me/index.html"], ["メッセージ", "messages/index.html"]]) +
       footerCol("出品する", [["出品者ダッシュボード", "dashboard/index.html"], ["出品者ガイド", "guide.html"]]) +
-      footerCol("サポート", [["amieとは", "about.html"], ["ヘルプ", "help.html"], ["利用規約", "terms.html"], ["プライバシー", "privacy.html"], ["特定商取引法に基づく表記", "tokusho.html"]]) +
+      footerCol("サポート", [["ELLMIEとは", "about.html"], ["ヘルプ", "help.html"], ["利用規約", "terms.html"], ["プライバシー", "privacy.html"], ["特定商取引法に基づく表記", "tokusho.html"]]) +
       "</div>" +
       '<div class="site-footer__sns">' + icon("brand-instagram") + icon("brand-tiktok") + icon("brand-x") + "</div>" +
-      '<p class="site-footer__copy">© 2026 amie（仮称）</p>' +
+      '<p class="site-footer__copy">© 2026 ELLMIE</p>' +
       "</footer>"
     );
   }

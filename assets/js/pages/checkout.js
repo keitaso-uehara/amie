@@ -49,7 +49,7 @@
       (p.format === "monthly" ? "、および毎月の自動更新" : "") + "に同意します。</span></label>" +
 
       '<button class="btn btn--rose btn--block" id="pay" disabled>' + App.money(p.price) + " を支払う</button>" +
-      '<p class="field-note center" style="margin-top:10px;">お支払いは取引完了までamieがお預かりします（エスクロー）。</p>' +
+      '<p class="field-note center" style="margin-top:10px;">お支払いは取引完了までELLMIEがお預かりします（エスクロー）。</p>' +
       "</div>"
     );
   }

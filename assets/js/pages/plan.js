@@ -14,7 +14,7 @@
     var id = App.qs("id");
     api.getPlan(id).then(function (p) {
       if (!p) { main.innerHTML = UI.empty("プランが見つかりませんでした。", "さがすへ", "search/index.html"); return; }
-      document.title = p.title + " | amie";
+      document.title = p.title + " | ELLMIE";
       main.innerHTML = view(p) + UI.siteFooter();
       mountBuybar(p);
     });
