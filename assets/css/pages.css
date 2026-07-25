@@ -31,14 +31,25 @@
 .home-search input { flex: 1; border: none; outline: none; background: none; font-size: var(--fs-base); }
 
 /* ---------- 箱型TOP: カテゴリ横スクロール ---------- */
-.cat-row { display: flex; gap: var(--sp-3); overflow-x: auto; padding: var(--sp-2) var(--sp-4) var(--sp-3); scrollbar-width: none; }
-.cat-row::-webkit-scrollbar { display: none; }
-.cat-chip { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 60px; text-align: center; }
-.cat-chip__ic { width: 52px; height: 52px; border-radius: var(--r-md); background: var(--rose-pale); display: grid; place-items: center; }
-.cat-chip__ic i { font-size: 23px; color: var(--rose-deep); }
-.cat-chip__ic--all { background: var(--sand); }
-.cat-chip__ic--all i { color: var(--gray); }
-.cat-chip__l { font-size: var(--fs-xs); color: var(--ink); line-height: 1.3; }
+/* カテゴリ: グループ別カラーの2段グリッド(横スクロール) */
+.cat-grid2 { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); gap: 14px 10px; overflow-x: auto; padding: var(--sp-2) var(--sp-4) var(--sp-3); scrollbar-width: none; }
+.cat-grid2::-webkit-scrollbar { display: none; }
+.cat-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 62px; text-align: center; }
+.cat-tile__ic { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; }
+.cat-tile__ic i { font-size: 25px; }
+.cat-tile__l { font-size: 11px; color: var(--ink); line-height: 1.25; }
+.cat-tile--beauty .cat-tile__ic { background: var(--rose-pale); }
+.cat-tile--beauty .cat-tile__ic i { color: var(--rose-deep); }
+.cat-tile--fashion .cat-tile__ic { background: var(--gold-pale); }
+.cat-tile--fashion .cat-tile__ic i { color: var(--gold); }
+.cat-tile--life .cat-tile__ic { background: #E9F1EC; }
+.cat-tile--life .cat-tile__ic i { color: #6E8B76; }
+.cat-tile--all .cat-tile__ic { background: var(--sand); }
+.cat-tile--all .cat-tile__ic i { color: var(--gray); }
+
+/* お悩みから探す */
+.concern-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.concern-chip { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: var(--r-pill); background: var(--rose-pale); color: var(--rose-deep); font-size: var(--fs-sm); font-weight: 700; }
 
 /* ---------- 箱型TOP: 近日開始バナー ---------- */
 .promo { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-4); }
