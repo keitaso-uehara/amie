@@ -1,7 +1,7 @@
-/* S1 TOP（箱型マーケットプレイス型）
-   並び: 検索バー → カテゴリ(グループ別カラーの2段グリッド) → 注目の出品者
-        → お悩みから探す → 人気のプラン → 出品者募集 → フッター
-   （ココナラ/メルカリ型の"見慣れた箱型"。詳細は beauty-mentor-spec/画面構成メモ_プレローンチ.md）
+/* S1 TOP（箱型マーケットプレイス型・出品×購入の2軸）
+   並び: 検索バー → カテゴリから探す(3グループ) → 特集 → 注目の出品者
+        → 新着プラン → 人気のプラン → 出品者募集 → フッター
+   新着を中盤に置くのは新規出品者の露出のため(Minne型)。ココナラ/Creema型の大分類カテゴリ。
    クエリ読取→api→描画 の3層を守る。 */
 (function () {
   var esc = function (s) { return App.esc(s); };
@@ -19,12 +19,11 @@
       var creators = res[0], popular = res[1], newest = res[2];
       main.innerHTML =
         searchBar() +
-        categoryGrid() +
+        categorySection() +
         featuresShelf() +
         featuredShelf(creators) +
-        concernShelf() +
-        plansShelf(popular) +
         newPlansShelf(newest) +
+        plansShelf(popular) +
         recruitSection() +
         UI.siteFooter();
       bindSearch();
@@ -41,18 +40,20 @@
     );
   }
 
-  /* ② カテゴリ（グループ別カラーの2段グリッド・横スクロール。ブラウズ派の主導線） */
-  function categoryGrid() {
-    var tiles = TAX.categories.map(function (c) {
-      var g = GROUP_CLASS[c.group] || "life";
-      return '<a class="cat-tile cat-tile--' + g + '" href="' + h("search/index.html?cat=" + c.slug) + '">' +
-        '<span class="cat-tile__ic">' + UI.icon(c.icon) + "</span>" +
-        '<span class="cat-tile__l">' + esc(c.label) + "</span></a>";
+  /* ② カテゴリから探す（3グループに分けて見出し付きで整理。全カテゴリを一覧・横スクロール無し） */
+  function categorySection() {
+    var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
+    var blocks = GROUPS.map(function (gname) {
+      var g = GROUP_CLASS[gname] || "life";
+      var tiles = TAX.categories.filter(function (c) { return c.group === gname; }).map(function (c) {
+        return '<a class="cat-tile cat-tile--' + g + '" href="' + h("search/index.html?cat=" + c.slug) + '">' +
+          '<span class="cat-tile__ic">' + UI.icon(c.icon) + "</span>" +
+          '<span class="cat-tile__l">' + esc(c.label) + "</span></a>";
+      }).join("");
+      return '<div class="cat-group"><p class="cat-group__label">' + esc(gname) + "</p>" +
+        '<div class="cat-grid-g">' + tiles + "</div></div>";
     }).join("");
-    var all = '<a class="cat-tile cat-tile--all" href="' + h("search/index.html") + '">' +
-      '<span class="cat-tile__ic">' + UI.icon("dots") + "</span>" +
-      '<span class="cat-tile__l">すべて</span></a>';
-    return '<div class="cat-grid2">' + tiles + all + "</div>";
+    return '<div class="section"><p class="section__title">カテゴリから探す</p>' + blocks + "</div>";
   }
 
   /* ③ 特集・ピックアップ（運営CMSで編集する想定のバナー棚） */
@@ -78,18 +79,6 @@
       '<p class="section__title">注目の出品者' +
       '<a class="more" href="' + h("search/index.html?tab=creators") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
       '<div class="creator-scroll">' + creators.map(UI.creatorMini).join("") + "</div></div>"
-    );
-  }
-
-  /* ④ お悩みから探す（相談サービスならではの入口。悩みタグで絞り込み） */
-  function concernShelf() {
-    var chips = TAX.concerns.map(function (c) {
-      return '<a class="concern-chip" href="' + h("search/index.html?concern=" + c.slug) + '">#' + esc(c.label) + "</a>";
-    }).join("");
-    return (
-      '<div class="section">' +
-      '<p class="section__title">お悩みから探す</p>' +
-      '<div class="concern-row">' + chips + "</div></div>"
     );
   }
 

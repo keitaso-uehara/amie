@@ -31,21 +31,15 @@
 .home-search input { flex: 1; border: none; outline: none; background: none; font-size: var(--fs-base); }
 
 /* ---------- 箱型TOP: カテゴリ横スクロール ---------- */
-/* カテゴリ: SPは「7つ＋すべて」の4列固定グリッド(横スクロール無し)。
-   PC(≥500px)は2段横スクロールで全カテゴリ表示。 */
-.cat-grid2 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 6px; padding: var(--sp-2) var(--sp-4) var(--sp-3); }
+/* カテゴリから探す: 3グループを見出し付きで縦に。各グループは4列グリッド(横スクロール無し) */
+.cat-group { margin-top: var(--sp-4); }
+.cat-group:first-of-type { margin-top: var(--sp-1); }
+.cat-group__label { font-size: var(--fs-sm); font-weight: 700; color: var(--gray); margin-bottom: var(--sp-3); }
+.cat-grid-g { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 6px; }
 .cat-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .cat-tile__ic { width: 54px; height: 54px; border-radius: 18px; display: grid; place-items: center; }
 .cat-tile__ic i { font-size: 24px; }
 .cat-tile__l { font-size: 11px; color: var(--ink); line-height: 1.25; }
-/* SP: 先頭7カテゴリ＋「すべて」だけ表示（残りは「すべて」から） */
-.cat-tile:nth-child(n+8):not(.cat-tile--all) { display: none; }
-@media (min-width: 500px) {
-  .cat-grid2 { grid-auto-flow: column; grid-template-columns: none; grid-template-rows: repeat(2, auto); gap: 14px 10px; overflow-x: auto; scrollbar-width: none; }
-  .cat-grid2::-webkit-scrollbar { display: none; }
-  .cat-tile { width: 64px; }
-  .cat-tile:nth-child(n+8):not(.cat-tile--all) { display: flex; }
-}
 .cat-tile--beauty .cat-tile__ic { background: var(--rose-pale); }
 .cat-tile--beauty .cat-tile__ic i { color: var(--rose-deep); }
 .cat-tile--fashion .cat-tile__ic { background: var(--gold-pale); }
@@ -54,10 +48,6 @@
 .cat-tile--life .cat-tile__ic i { color: #6E8B76; }
 .cat-tile--all .cat-tile__ic { background: var(--sand); }
 .cat-tile--all .cat-tile__ic i { color: var(--gray); }
-
-/* お悩みから探す */
-.concern-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.concern-chip { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: var(--r-pill); background: var(--rose-pale); color: var(--rose-deep); font-size: var(--fs-sm); font-weight: 700; }
 
 /* 特集・ピックアップ */
 .feature-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
