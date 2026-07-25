@@ -33,7 +33,8 @@ window.DB.staticPages = {
       "<ul><li>LINE等・外部サービスへの誘導</li>" +
       "<li>商品・サロン・講座・マルチ商法などの勧誘</li>" +
       "<li>医療行為・医学的診断（パーソナルカラー診断等は美容アドバイスの範囲で）</li>" +
-      "<li>ビデオ通話の録画、ハラスメント行為</li></ul>"
+      "<li>ビデオ通話の録画、ハラスメント行為</li></ul>" +
+      '<p style="margin-top:24px;"><a class="btn btn--rose btn--block" href="sell/index.html">出品者になる（無料ではじめる）</a></p>'
   },
   help: {
     title: "ヘルプ / よくある質問",

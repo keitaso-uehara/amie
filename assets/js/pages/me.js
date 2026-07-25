@@ -76,7 +76,7 @@
     var items = [
       ["heart", "お気に入り", null],
       ["receipt", "購入履歴", null],
-      ["user-star", "出品者になる", "dashboard/index.html"],
+      ["user-star", "出品者になる", "sell/index.html"],
       ["settings", "設定", null],
       ["logout", "ログアウト", "logout"]
     ];

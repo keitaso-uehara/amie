@@ -255,6 +255,50 @@
 .seg__item { flex: 1; padding: 10px 4px; text-align: center; border: 1px solid var(--line-d); border-radius: var(--r-md); font-size: var(--fs-sm); font-weight: 700; background: #fff; color: var(--gray); }
 .seg__item.is-on { background: var(--rose); color: #fff; border-color: var(--rose); }
 
+/* ===== 出品者オンボーディング ===== */
+.onb { padding-top: var(--sp-4); }
+.req { display: inline-block; font-size: 10px; font-weight: 700; color: var(--rose-deep); background: var(--rose-pale); border-radius: 4px; padding: 1px 6px; vertical-align: 1px; }
+
+/* 進捗インジケータ */
+.onb-steps { display: flex; align-items: flex-start; justify-content: center; margin: 6px 0 22px; }
+.onb-steps__item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; }
+.onb-steps__dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--sand); color: var(--gray); font-weight: 700; font-size: 14px; }
+.onb-steps__item.is-on .onb-steps__dot { background: var(--rose); color: #fff; }
+.onb-steps__item.is-done .onb-steps__dot { background: var(--rose-deep); color: #fff; }
+.onb-steps__label { font-size: 12px; color: var(--gray); text-align: center; }
+.onb-steps__item.is-on .onb-steps__label,
+.onb-steps__item.is-done .onb-steps__label { color: var(--rose-deep); font-weight: 700; }
+.onb-steps__bar { flex: 0 0 20px; height: 2px; background: var(--line-d); margin-top: 14px; }
+.onb-steps__bar.is-done { background: var(--rose); }
+
+/* ヒーロー */
+.onb-hero { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-5); margin-bottom: var(--sp-5); }
+.onb-hero__title { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; color: var(--rose-deep); line-height: 1.35; }
+.onb-hero__sub { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: 6px; line-height: 1.7; }
+.onb-values { display: flex; flex-direction: column; gap: 8px; margin-top: var(--sp-4); }
+.onb-value { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+.onb-value i { color: var(--rose); font-size: 18px; }
+
+.onb-h { font-family: var(--font-serif); font-size: var(--fs-lg); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-4); }
+.onb-sns { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.onb-sns i { font-size: 22px; color: var(--gray); flex: 0 0 auto; }
+.onb-sns .field { flex: 1; }
+.onb-foot { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: var(--fs-sm); color: var(--gray); margin-top: var(--sp-4); }
+.onb-foot i { color: var(--rose); }
+
+/* 完了 */
+.onb-done { text-align: center; }
+.onb-done__badge { width: 72px; height: 72px; border-radius: 50%; margin: var(--sp-3) auto var(--sp-4); display: grid; place-items: center; background: linear-gradient(135deg, var(--rose), var(--gold)); color: #fff; font-size: 34px; }
+.onb-done__title { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; color: var(--rose-deep); }
+.onb-done__sub { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: 8px; line-height: 1.8; }
+.onb-done__card { margin: var(--sp-5) 0; text-align: left; }
+.onb-next { text-align: left; background: var(--cream); border-radius: var(--r-lg); padding: var(--sp-4); margin: var(--sp-5) 0; }
+.onb-next__h { font-size: var(--fs-sm); font-weight: 700; color: var(--rose-deep); margin-bottom: var(--sp-3); }
+.onb-next__item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+.onb-next__item i { font-size: 20px; color: var(--rose); flex: 0 0 auto; margin-top: 2px; }
+.onb-next__t { font-size: var(--fs-base); font-weight: 700; color: var(--ink); }
+.onb-next__d { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.6; margin-top: 2px; }
+
 /* ---------- S9 レビュー: 星入力 ---------- */
 .star-input { display: flex; gap: 6px; }
 .star-input button { font-size: 34px; color: var(--gray-ll); }

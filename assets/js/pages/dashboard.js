@@ -13,17 +13,15 @@
     api.getFeaturedCreators(1).then(function (top) {
       return Promise.all([top[0] ? api.getCreator(top[0].id) : Promise.resolve(null), api.getMyPlans(), api.getMySeller()]);
     }).then(function (res) {
-      var c = res[0] || { plans: [], stats: { rating: 0 } }, myPlans = res[1], mySeller = res[2];
-      // デモ用の当月売上(プラン価格×直近販売の想定)
-      var gross = 184000, pending = 46000;
-      var net = Math.round(gross * (1 - FEE));
+      var sample = res[0] || { plans: [], stats: { rating: 0 }, name: "", handle: "creator" }, myPlans = res[1] || [], mySeller = res[2];
+      if (!mySeller) { main.innerHTML = notSellerYet() + UI.siteFooter(); return; }
       main.innerHTML =
-        head(gross, net) +
-        cards(pending, c) +
+        head(mySeller) +
+        cards(mySeller) +
         limitBox() +
         myPlansSection(myPlans, mySeller) +
-        plansSection(c) +
-        promoSection(c) +
+        sampleSection(sample) +
+        promoSection(mySeller) +
         UI.siteFooter();
       bind(mySeller);
     });
@@ -45,23 +43,36 @@
     );
   }
 
-  function head(gross, net) {
+  /* まだ出品者プロフィールが無い場合の入口 */
+  function notSellerYet() {
     return (
-      '<div class="dash-head">' +
-      '<p class="dash-head__label">' + UI.icon("sparkles") + " 出品者ダッシュボード（デモ）</p>" +
-      '<p class="dash-sales">' + App.money(net) + "<small>今月の受取見込み</small></p>" +
-      '<p class="dash-head__label" style="margin-top:6px;">売上 ' + App.money(gross) + " － 手数料20% ＝ 受取 " + App.money(net) + "</p>" +
+      '<div class="section" style="padding-top:28px;text-align:center;">' +
+      '<div class="onb-done__badge" style="margin:8px auto 16px;">' + UI.icon("sparkles") + "</div>" +
+      '<p class="onb-h" style="text-align:center;">まだ出品者ではありません</p>' +
+      '<p class="lead" style="margin-bottom:18px;">プロフィールと最初のプランを作れば、今日から出品できます。登録は無料、手数料は売れた時だけ。</p>' +
+      '<a class="btn btn--rose btn--block" href="' + h("sell/index.html") + '">出品者になる（無料）</a>' +
       "</div>"
     );
   }
 
-  function cards(pending, c) {
+  function head(seller) {
+    return (
+      '<div class="dash-head">' +
+      '<p class="dash-head__label">' + UI.icon("sparkles") + " 出品者ダッシュボード</p>" +
+      '<p class="dash-sales">' + App.money(0) + "<small>" + esc(seller.name) + "さんの今月の受取見込み</small></p>" +
+      '<p class="dash-head__label" style="margin-top:6px;">売上が発生すると、手数料20%を引いた受取額がここに表示されます。</p>' +
+      "</div>"
+    );
+  }
+
+  function cards(seller) {
+    var rating = seller.stats && seller.stats.rating ? seller.stats.rating : "—";
     return (
       '<div class="dash-cards">' +
-      card(App.money(pending), "確定待ち(エスクロー)") +
-      card("3", "取引中") +
-      card("2", "未返信メッセージ") +
-      card(c.stats.rating, "平均評価") +
+      card(App.money(0), "確定待ち(エスクロー)") +
+      card("0", "取引中") +
+      card("0", "未返信メッセージ") +
+      card(rating, "平均評価") +
       "</div>"
     );
   }
@@ -75,10 +86,12 @@
     );
   }
 
-  function plansSection(c) {
+  function sampleSection(c) {
+    if (!c.plans || !c.plans.length) return "";
     return (
       '<div class="section hr">' +
-      '<p class="section__title">サンプル：MOEKAさんのプラン実績</p>' +
+      '<p class="section__title">参考：人気出品者の実績' + (c.name ? "（" + esc(c.name) + "さん）" : "") + "</p>" +
+      '<p class="lead" style="margin-bottom:10px;">売れている出品者のプランと数字です。あなたのプラン作りの参考に。</p>' +
       '<div class="plan-list">' + c.plans.map(function (p) {
         return '<div style="position:relative;">' + UI.planCard(p) +
           '<p class="field-note" style="padding:0 4px 8px;">閲覧 ' + (p.stats.sales * 6) + " ・ 購入 " + p.stats.sales + "</p></div>";
@@ -86,8 +99,8 @@
     );
   }
 
-  function promoSection(c) {
-    var url = "https://ellmie.com/@" + c.handle;
+  function promoSection(seller) {
+    var url = "https://ellmie.com/@" + (seller.handle || "you");
     return (
       '<div class="section hr">' +
       '<p class="section__title">宣伝リンク</p>' +
@@ -95,7 +108,7 @@
       '<div class="search-bar" style="background:var(--cream);"><span class="muted" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(url) + "</span>" +
       '<button class="btn btn--sm btn--rose" id="copy">コピー</button></div>' +
       '<div class="stat-row" style="margin-top:14px;">' +
-      UI.statTile("今月の流入", "1,240", "") + UI.statTile("経由購入", "38", "件") + UI.statTile("転換率", "3.1", "%") +
+      UI.statTile("今月の流入", "0", "") + UI.statTile("経由購入", "0", "件") + UI.statTile("転換率", "—", "") +
       "</div></div>"
     );
   }
