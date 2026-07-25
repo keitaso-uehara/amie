@@ -125,6 +125,13 @@
 .rlist-row__stat { font-size: var(--fs-sm); color: var(--gray); margin-top: 3px; }
 .rlist-row__stat i { color: var(--gold); font-size: 12px; }
 
+/* 人気のユーザー（下層）の行 */
+.rlist--user .rlist-row > i.ti-chevron-right { flex: 0 0 auto; color: var(--gray); font-size: 18px; }
+.urank-stat { display: flex; align-items: center; gap: 12px; }
+.urank-follow { display: inline-flex; align-items: center; gap: 4px; }
+.urank-follow i { color: var(--rose); font-size: 13px; }
+.urank-rate { display: inline-flex; align-items: center; gap: 4px; }
+
 /* ELLMIEの説明 */
 .about-band { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-5); text-align: center; }
 .about-band__logo { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; letter-spacing: 1px; color: var(--rose-deep); }

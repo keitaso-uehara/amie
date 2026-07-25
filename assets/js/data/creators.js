@@ -128,7 +128,7 @@ window.DB.creators = [
         bio: cat.label + "に関するご相談を受けています。（デモ用サンプル）",
         categories: [cat.slug], mainCategory: cat.slug, concerns: [],
         sns: { instagram: ig, tiktok: Math.round(ig * 0.55) },
-        stats: { sales: 40 + ((ci * 13 + i * 29) % 160), rating: Math.round((4.6 + ((7 - i) % 4) * 0.08) * 10) / 10, repeat: 25 + ((ci + i) % 45) },
+        stats: { sales: 40 + ((ci * 13 + i * 29) % 160), rating: Math.round((4.6 + ((7 - i) % 4) * 0.08) * 10) / 10, repeat: 25 + ((ci + i) % 45), pv: 800 + ((ci * 29 + i * 53) % 90) * 130 },
         planIds: []
       });
     }
