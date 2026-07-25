@@ -70,6 +70,32 @@
 .feature-card--life { background: linear-gradient(135deg, #E9F1EC, #fff); }
 .feature-card--life .feature-card__title, .feature-card--life .feature-card__go { color: #5F7A67; }
 
+/* カテゴリ別ランキング */
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--sand); }
+.rank-row:last-child { border-bottom: none; }
+.rank-row__no { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--sand); color: var(--gray); }
+.rank-row__no.rank-1 { background: var(--gold); color: #fff; }
+.rank-row__no.rank-2 { background: #C9CCD1; color: #fff; }
+.rank-row__no.rank-3 { background: #D9A679; color: #fff; }
+.rank-row__body { flex: 1; min-width: 0; }
+.rank-row__t { font-size: var(--fs-base); font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-row__m { font-size: var(--fs-sm); color: var(--gray); margin-top: 2px; }
+.rank-row__rating { flex: 0 0 auto; font-size: var(--fs-sm); color: var(--ink-soft); }
+.rank-row__rating i { color: var(--gold); font-size: 12px; }
+
+/* ELLMIEの説明 */
+.about-band { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-5); text-align: center; }
+.about-band__logo { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; letter-spacing: 1px; color: var(--rose-deep); }
+.about-band__lead { font-family: var(--font-serif); font-size: var(--fs-lg); font-weight: 700; color: var(--ink); margin-top: 6px; }
+.about-band__sub { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.8; margin: 8px 0 16px; }
+
+/* NEWS */
+.news-list { display: flex; flex-direction: column; }
+.news-row { display: flex; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--sand); font-size: var(--fs-sm); }
+.news-row:last-child { border-bottom: none; }
+.news-row__date { flex: 0 0 auto; color: var(--gold); font-weight: 700; }
+.news-row__t { color: var(--ink); }
+
 /* ---------- 箱型TOP: 近日開始バナー ---------- */
 .promo { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-4); }
 .promo__badge { display: inline-block; font-size: var(--fs-xs); font-weight: 700; color: var(--rose-deep); background: #fff; padding: 3px 11px; border-radius: var(--r-pill); margin-bottom: var(--sp-2); }

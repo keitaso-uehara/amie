@@ -7,3 +7,10 @@ window.DB.features = [
   { title: "新生活を整える", sub: "収納・インテリアのプロに相談", q: "cat=interior", tone: "life" },
   { title: "デート前の総仕上げ", sub: "メイク・コーデをまとめて", q: "concern=date", tone: "rose" }
 ];
+
+/* NEWS/お知らせ（TOP掲載。運営CMSで編集する想定） */
+window.DB.news = [
+  { date: "2026.07.20", title: "特集「垢抜けたい夏」を公開しました" },
+  { date: "2026.07.12", title: "パーソナルカラー・骨格診断カテゴリを追加しました" },
+  { date: "2026.07.01", title: "ELLMIE 事前登録を開始しました" }
+];

@@ -1,38 +1,40 @@
 /* S1 TOP（箱型マーケットプレイス型・出品×購入の2軸）
-   並び: 検索バー → カテゴリ(タブ) → 注目の出品者 → 特集 → 人気のプラン
-        → 新着プラン → 出品者募集 → フッター
-   実サイト調査(MENTA/ココナラ/Creema)を反映: 人(注目の出品者)を上位、人気→新着の順。
-   ELLMIEは「憧れの人に相談」＝人が主役なので注目を高い位置に。
+   並び: 検索 → 特集バナー → 人気のユーザー → カテゴリ → オススメ
+        → カテゴリ別ランキング → ELLMIEの説明 → NEWS → フッター
    クエリ読取→api→描画 の3層を守る。 */
 (function () {
   var esc = function (s) { return App.esc(s); };
   var h = function (p) { return App.href(p); };
 
   var GROUP_CLASS = { "ビューティー": "beauty", "ファッション": "fashion", "ライフスタイル": "life" };
+  var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
+  var rkData = [];   // カテゴリ別ランキングのデータ（タブ切替用）
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
     Promise.all([
       api.getFeaturedCreators(8),
-      api.getPopularPlans(6),
-      api.getNewPlans(6)
+      api.getPlans()
     ]).then(function (res) {
-      var creators = res[0], popular = res[1], newest = res[2];
+      var creators = res[0], plans = res[1] || [];
+      var popular = plans.slice().sort(function (a, b) { return (b.stats.sales || 0) - (a.stats.sales || 0); });
       main.innerHTML =
         searchBar() +
-        categorySection() +
-        featuredShelf(creators) +
         featuresShelf() +
-        plansShelf(popular) +
-        newPlansShelf(newest) +
-        recruitSection() +
+        usersShelf(creators) +
+        categorySection() +
+        recommendShelf(popular.slice(0, 8)) +
+        rankingSection(plans) +
+        aboutSection() +
+        newsSection() +
         UI.siteFooter();
       bindSearch();
       bindCategoryTabs();
+      bindRanking();
     });
   });
 
-  /* ① 検索バー（目的が明確な人の主導線） */
+  /* ① 検索バー */
   function searchBar() {
     return (
       '<div class="home-search-wrap">' +
@@ -42,8 +44,33 @@
     );
   }
 
-  /* ② カテゴリから探す（グループをタブで切替＋1行スクロールでコンパクトに） */
-  var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
+  /* ② 特集・ピックアップ（スライドバナー） */
+  function featuresShelf() {
+    var items = window.DB.features || [];
+    if (!items.length) return "";
+    return (
+      '<div class="section">' +
+      '<p class="section__title">特集・ピックアップ</p>' +
+      '<div class="feature-scroll">' + items.map(function (f) {
+        return '<a class="feature-card feature-card--' + esc(f.tone || "rose") + '" href="' + h("search/index.html?" + f.q) + '">' +
+          '<p class="feature-card__title">' + esc(f.title) + "</p>" +
+          '<p class="feature-card__sub">' + esc(f.sub) + "</p>" +
+          '<span class="feature-card__go">見る ' + UI.icon("arrow-right") + "</span></a>";
+      }).join("") + "</div></div>"
+    );
+  }
+
+  /* ③ 人気のユーザー（1列スライド） */
+  function usersShelf(creators) {
+    return (
+      '<div class="section">' +
+      '<p class="section__title">人気のユーザー' +
+      '<a class="more" href="' + h("search/index.html?tab=creators") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
+      '<div class="creator-scroll">' + creators.map(UI.creatorMini).join("") + "</div></div>"
+    );
+  }
+
+  /* ④ カテゴリ（グループタブ＋1行スクロール） */
   function categorySection() {
     var tabs = GROUPS.map(function (gname, i) {
       return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-g="' + esc(gname) + '">' + esc(gname) + "</button>";
@@ -73,62 +100,81 @@
     });
   }
 
-  /* ③ 特集・ピックアップ（運営CMSで編集する想定のバナー棚） */
-  function featuresShelf() {
-    var items = window.DB.features || [];
-    if (!items.length) return "";
-    return (
-      '<div class="section">' +
-      '<p class="section__title">特集・ピックアップ</p>' +
-      '<div class="feature-scroll">' + items.map(function (f) {
-        return '<a class="feature-card feature-card--' + esc(f.tone || "rose") + '" href="' + h("search/index.html?" + f.q) + '">' +
-          '<p class="feature-card__title">' + esc(f.title) + "</p>" +
-          '<p class="feature-card__sub">' + esc(f.sub) + "</p>" +
-          '<span class="feature-card__go">見る ' + UI.icon("arrow-right") + "</span></a>";
-      }).join("") + "</div></div>"
-    );
-  }
-
-  /* ④ 注目の出品者の棚 */
-  function featuredShelf(creators) {
-    return (
-      '<div class="section">' +
-      '<p class="section__title">注目の出品者' +
-      '<a class="more" href="' + h("search/index.html?tab=creators") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
-      '<div class="creator-scroll">' + creators.map(UI.creatorMini).join("") + "</div></div>"
-    );
-  }
-
-  /* ⑤ 人気のプランの棚 */
-  function plansShelf(plans) {
-    return (
-      '<div class="section">' +
-      '<p class="section__title">人気のプラン' +
-      '<a class="more" href="' + h("search/index.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
-      '<div class="plan-scroll">' + plans.map(UI.planCard).join("") + "</div></div>"
-    );
-  }
-
-  /* ⑦ 新着プランの棚 */
-  function newPlansShelf(plans) {
+  /* ⑤ オススメ（人気の相談プランをスライド） */
+  function recommendShelf(plans) {
     if (!plans.length) return "";
     return (
       '<div class="section">' +
-      '<p class="section__title">新着プラン' +
+      '<p class="section__title">オススメの相談' +
       '<a class="more" href="' + h("search/index.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
       '<div class="plan-scroll">' + plans.map(UI.planCard).join("") + "</div></div>"
     );
   }
 
-  /* ⑧ 出品者募集（購入者ファーストなので小さく下部に） */
-  function recruitSection() {
+  /* ⑥ カテゴリ別ランキング（カテゴリをタブで切替、販売数順） */
+  function rankingSection(plans) {
+    var byCat = {};
+    plans.forEach(function (p) { (byCat[p.category] = byCat[p.category] || []).push(p); });
+    rkData = Object.keys(byCat).map(function (slug) {
+      var t = TAX.categories.filter(function (c) { return c.slug === slug; })[0];
+      return { slug: slug, label: t ? t.label : slug, plans: byCat[slug].sort(function (a, b) { return (b.stats.sales || 0) - (a.stats.sales || 0); }) };
+    }).sort(function (a, b) { return b.plans.length - a.plans.length; }).slice(0, 5);
+    if (!rkData.length) return "";
+    var tabs = rkData.map(function (c, i) {
+      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-rk="' + esc(c.slug) + '">' + esc(c.label) + "</button>";
+    }).join("");
     return (
       '<div class="section">' +
-      '<a class="recruit" href="' + h("guide.html") + '">' +
-      '<p class="recruit__label">' + UI.icon("sparkles") + " 出品者募集</p>" +
-      '<p class="recruit__lead">あなたの「好き」を、<br>次の収入に。</p>' +
-      '<span class="recruit__cta">出品者ガイドを見る ' + UI.icon("arrow-right") + "</span>" +
-      "</a></div>"
+      '<p class="section__title">カテゴリ別ランキング</p>' +
+      '<div class="cat-tabs" id="rk-tabs">' + tabs + "</div>" +
+      '<div id="rk-list">' + rankList(rkData[0].plans) + "</div></div>"
+    );
+  }
+  function rankList(plans) {
+    return plans.slice(0, 5).map(function (p, i) {
+      var c = p.creator || {};
+      return '<a class="rank-row" href="' + h("plans/show.html?id=" + p.id) + '">' +
+        '<span class="rank-row__no rank-' + (i + 1) + '">' + (i + 1) + "</span>" +
+        '<div class="rank-row__body"><p class="rank-row__t">' + esc(p.title) + "</p>" +
+        '<p class="rank-row__m">' + esc(c.name) + " ・ " + App.money(p.price) + "</p></div>" +
+        '<span class="rank-row__rating">' + UI.icon("star-filled") + " " + p.stats.rating + "</span></a>";
+    }).join("");
+  }
+  function bindRanking() {
+    var tabs = document.getElementById("rk-tabs");
+    if (!tabs) return;
+    tabs.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-rk]"); if (!b) return;
+      Array.prototype.forEach.call(tabs.querySelectorAll(".cat-tab"), function (x) { x.classList.toggle("is-on", x === b); });
+      var d = rkData.filter(function (x) { return x.slug === b.dataset.rk; })[0];
+      if (d) document.getElementById("rk-list").innerHTML = rankList(d.plans);
+    });
+  }
+
+  /* ⑦ ELLMIEの説明 */
+  function aboutSection() {
+    return (
+      '<div class="section">' +
+      '<div class="about-band">' +
+      '<p class="about-band__logo">ELLMIE</p>' +
+      '<p class="about-band__lead">憧れの人に、相談できる。</p>' +
+      '<p class="about-band__sub">メイク・コーデ・暮らしを、憧れの人が1対1で直接アドバイス。チャットやビデオで、あなたに合わせて。</p>' +
+      '<a class="btn btn--outline btn--sm" href="' + h("about.html") + '">ELLMIEについて</a>' +
+      "</div></div>"
+    );
+  }
+
+  /* ⑧ NEWS */
+  function newsSection() {
+    var items = window.DB.news || [];
+    if (!items.length) return "";
+    return (
+      '<div class="section">' +
+      '<p class="section__title">NEWS<a class="more" href="' + h("about.html") + '">一覧 ' + UI.icon("chevron-right") + "</a></p>" +
+      '<div class="news-list">' + items.map(function (n) {
+        return '<div class="news-row"><span class="news-row__date">' + esc(n.date) + "</span>" +
+          '<span class="news-row__t">' + esc(n.title) + "</span></div>";
+      }).join("") + "</div></div>"
     );
   }
 
