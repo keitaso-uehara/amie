@@ -88,8 +88,13 @@
 .rank-more-card__ic { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
 .rank-more-card__ic i { font-size: 20px; color: var(--rose-deep); }
 /* 人気のユーザー: 順位バッジ付きクリエイターカード */
-.rank-scroll .rank-user { flex: 0 0 132px; position: relative; }
-.rank-scroll .rank-user .creator-mini { flex: none; width: 100%; }
+/* 人気のユーザー：ランキング用の均一カード（高さを揃えて余白バグを解消） */
+.rank-user-card { flex: 0 0 128px; position: relative; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 10px 14px; display: flex; flex-direction: column; align-items: center; }
+.rank-user-card .avatar--lg { margin-bottom: 8px; }
+.rank-user-card__name { font-size: var(--fs-base); font-weight: 700; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 3px; max-width: 100%; white-space: nowrap; overflow: hidden; }
+.rank-user-card__type { font-size: var(--fs-xs); color: var(--gray); margin-top: 2px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-user-card__follow { margin-top: 10px; font-size: var(--fs-sm); font-weight: 700; color: var(--ink); display: inline-flex; align-items: center; gap: 4px; }
+.rank-user-card__follow i { color: var(--rose); font-size: 14px; }
 .rank-badge { position: absolute; top: 8px; left: 8px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; background: var(--rose); box-shadow: 0 1px 5px rgba(43,35,32,0.28); }
 .rank-badge.rank-1 { background: var(--gold); }
 .rank-badge.rank-2 { background: #9AA0A6; }

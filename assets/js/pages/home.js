@@ -64,10 +64,24 @@
   function followerTotal(c) { var s = c.sns || {}; return (s.instagram || 0) + (s.tiktok || 0) + (s.youtube || 0) + (s.x || 0); }
   function pvOf(c) { var s = c.stats || {}; return s.pv != null ? s.pv : Math.round(followerTotal(c) / 40) + (s.sales || 0); }
   function catGroup(slug) { var c = TAX.categories.filter(function (x) { return x.slug === slug; })[0]; return c ? c.group : null; }
+  function fmtCount(n) {
+    if (n >= 10000) return (Math.round(n / 1000) / 10).toString().replace(/\.0$/, "") + "万";
+    if (n >= 1000) return (Math.round(n / 100) / 10).toString().replace(/\.0$/, "") + "千";
+    return String(n);
+  }
+  /* ランキング用の均一カード（フォロワーは合算1指標にして高さを揃える） */
+  function rankUserCard(c, rank) {
+    var ft = followerTotal(c);
+    return '<a class="rank-user-card" href="' + h("creators/show.html?id=" + c.id) + '">' +
+      '<span class="rank-badge rank-' + rank + '">' + rank + "</span>" +
+      UI.avatar(c, "avatar--lg") +
+      '<p class="rank-user-card__name">' + esc(c.name) + (c.verified ? UI.verified() : "") + "</p>" +
+      '<p class="rank-user-card__type">' + esc(c.typeLabel) + "</p>" +
+      (ft ? '<p class="rank-user-card__follow">' + UI.icon("users") + " " + fmtCount(ft) + "</p>" : "") +
+      "</a>";
+  }
   function usersRow(sorted, moreHref) {
-    var cards = sorted.slice(0, 5).map(function (c, i) {
-      return '<div class="rank-user"><span class="rank-badge rank-' + (i + 1) + '">' + (i + 1) + "</span>" + UI.creatorMini(c) + "</div>";
-    }).join("");
+    var cards = sorted.slice(0, 5).map(function (c, i) { return rankUserCard(c, i + 1); }).join("");
     var more = sorted.length > 5
       ? '<a class="rank-more-card" href="' + h(moreHref) + '"><span class="rank-more-card__ic">' + UI.icon("arrow-right") + "</span>もっと見る</a>"
       : "";
@@ -85,7 +99,8 @@
     }).join("");
     return (
       '<div class="section">' +
-      '<p class="section__title">人気のユーザー</p>' +
+      '<p class="section__title">人気のユーザー' +
+      '<a class="more" href="' + h("users.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
       '<p class="rank-group__label">総合</p>' +
       '<div class="rank-scroll">' + usersRow(usersSorted, "users.html") + "</div>" +
       '<div class="cat-tabs" id="user-tabs" style="margin-top:18px;">' + tabs + "</div>" +
