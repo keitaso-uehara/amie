@@ -1,7 +1,8 @@
 /* S1 TOP（箱型マーケットプレイス型・出品×購入の2軸）
-   並び: 検索バー → カテゴリから探す(3グループ) → 特集 → 注目の出品者
-        → 新着プラン → 人気のプラン → 出品者募集 → フッター
-   新着を中盤に置くのは新規出品者の露出のため(Minne型)。ココナラ/Creema型の大分類カテゴリ。
+   並び: 検索バー → カテゴリ(タブ) → 注目の出品者 → 特集 → 人気のプラン
+        → 新着プラン → 出品者募集 → フッター
+   実サイト調査(MENTA/ココナラ/Creema)を反映: 人(注目の出品者)を上位、人気→新着の順。
+   ELLMIEは「憧れの人に相談」＝人が主役なので注目を高い位置に。
    クエリ読取→api→描画 の3層を守る。 */
 (function () {
   var esc = function (s) { return App.esc(s); };
@@ -20,10 +21,10 @@
       main.innerHTML =
         searchBar() +
         categorySection() +
-        featuresShelf() +
         featuredShelf(creators) +
-        newPlansShelf(newest) +
+        featuresShelf() +
         plansShelf(popular) +
+        newPlansShelf(newest) +
         recruitSection() +
         UI.siteFooter();
       bindSearch();
