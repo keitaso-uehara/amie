@@ -17,8 +17,9 @@
       var sellerOrders = res[3] || [], payouts = res[4] || [], top = res[5] || [];
       if (!mySeller) { main.innerHTML = notSellerYet() + UI.siteFooter(); return; }
       var sampleP = top[0] ? api.getCreator(top[0].id) : Promise.resolve(null);
-      sampleP.then(function (sample) {
-        sample = sample || { plans: [], stats: { rating: 0 }, name: "", handle: "creator" };
+      Promise.all([sampleP, api.getReferralStats(mySeller.handle)]).then(function (r2) {
+        var sample = r2[0] || { plans: [], stats: { rating: 0 }, name: "", handle: "creator" };
+        var refStats = r2[1] || { visits: 0, purchases: 0, cvr: 0 };
         main.innerHTML =
           head(mySeller, bal) +
           cards(mySeller, bal, sellerOrders) +
@@ -27,7 +28,7 @@
           limitBox() +
           myPlansSection(myPlans, mySeller) +
           sampleSection(sample) +
-          promoSection(mySeller, myPlans) +
+          promoSection(mySeller, myPlans, refStats) +
           UI.siteFooter();
         bind(mySeller, bal);
       });
@@ -156,36 +157,42 @@
     );
   }
 
-  function promoSection(seller, myPlans) {
+  function promoSection(seller, myPlans, ref) {
     var planLinks = (myPlans || []).map(function (p) {
       return '<div class="share-row"><span class="share-row__t">' + UI.icon("link") + " " + esc(p.title) + "</span>" +
-        '<button class="btn btn--sm btn--outline" data-copyplan="' + esc(p.id) + '">コピー</button></div>';
+        '<button class="btn btn--sm btn--outline" data-copyplan="' + esc(p.id) + '">' + UI.icon("share") + " シェア</button></div>";
     }).join("");
     return (
       '<div class="section hr">' +
       '<p class="section__title">シェアして集客</p>' +
       '<p class="lead" style="margin-bottom:12px;">SNSのプロフィールやストーリーズに貼るだけ。タップした人は<b>そのまま相談を購入</b>できます（登録は購入時でOK）。</p>' +
       '<div class="share-row"><span class="share-row__t">' + UI.icon("user") + " プロフィール（全プランを表示）</span>" +
-      '<button class="btn btn--sm btn--rose" id="copy-profile">コピー</button></div>' +
+      '<button class="btn btn--sm btn--rose" id="copy-profile">' + UI.icon("share") + " シェア</button></div>" +
       (planLinks ? '<p class="field-label" style="margin-top:14px;">プランごとの購入リンク（ストーリーズ向け）</p><div class="share-list">' + planLinks + "</div>" : "") +
-      '<div class="stat-row" style="margin-top:16px;">' +
-      UI.statTile("今月の流入", "0", "") + UI.statTile("経由購入", "0", "件") + UI.statTile("転換率", "—", "") +
+      '<p class="field-label" style="margin-top:16px;">このリンクの成果</p>' +
+      '<div class="stat-row">' +
+      UI.statTile("リンク表示", String(ref.visits), "") +
+      UI.statTile("経由の購入", String(ref.purchases), "件") +
+      UI.statTile("転換率", ref.visits ? String(ref.cvr) : "—", ref.visits ? "%" : "") +
       "</div></div>"
     );
   }
 
   function bind(mySeller, bal) {
+    var handle = mySeller.handle || "you";
+    var toastShare = function (r, copiedMsg) { if (r === "copied") UI.toast(copiedMsg); else if (r === "shared") UI.toast("シェアしました"); };
     var cp = document.getElementById("copy-profile");
     if (cp) cp.addEventListener("click", function () {
-      App.copyText(App.absUrl("creators/show.html?id=" + mySeller.id))
-        .then(function () { UI.toast("プロフィールのリンクをコピーしました"); })
-        .catch(function () { UI.toast("コピーできませんでした"); });
+      App.share({ text: mySeller.name + "さんに相談できます", url: App.absUrl("creators/show.html?id=" + mySeller.id) })
+        .then(function (r) { toastShare(r, "プロフィールのリンクをコピーしました"); })
+        .catch(function () { UI.toast("できませんでした"); });
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-copyplan]"), function (b) {
       b.addEventListener("click", function () {
-        App.copyText(App.absUrl("checkout/index.html?plan=" + b.dataset.copyplan))
-          .then(function () { UI.toast("購入リンクをコピーしました"); })
-          .catch(function () { UI.toast("コピーできませんでした"); });
+        var url = App.absUrl("checkout/index.html?plan=" + b.dataset.copyplan + "&ref=" + handle);
+        App.share({ text: "相談を予約できます", url: url })
+          .then(function (r) { toastShare(r, "購入リンクをコピーしました"); })
+          .catch(function () { UI.toast("できませんでした"); });
       });
     });
     var lm = document.getElementById("limit");

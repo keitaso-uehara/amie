@@ -42,7 +42,7 @@
       "</div>" + UI.icon("chevron-right") +
       "</a>" +
 
-      '<button class="btn btn--outline btn--sm plan-share" id="share-plan">' + UI.icon("share") + " このプランのリンクをコピー</button>" +
+      '<button class="btn btn--outline btn--sm plan-share" id="share-plan">' + UI.icon("share") + " このプランをシェア</button>" +
 
       /* スペック表 */
       specList(p) +
@@ -126,10 +126,12 @@
 
   function bindShare(p) {
     var b = document.getElementById("share-plan");
-    if (b) b.addEventListener("click", function () {
-      App.copyText(App.absUrl("checkout/index.html?plan=" + p.id)).then(function () {
-        UI.toast("購入リンクをコピーしました");
-      }).catch(function () { UI.toast("コピーに失敗しました"); });
+    if (!b) return;
+    var ref = (p.creator && p.creator.handle) ? "&ref=" + p.creator.handle : "";
+    b.addEventListener("click", function () {
+      App.share({ text: (p.creator ? p.creator.name + "さんに相談できます" : "相談を予約できます"), url: App.absUrl("checkout/index.html?plan=" + p.id + ref) })
+        .then(function (r) { if (r === "copied") UI.toast("購入リンクをコピーしました"); else if (r === "shared") UI.toast("シェアしました"); })
+        .catch(function () { UI.toast("できませんでした"); });
     });
   }
 })();

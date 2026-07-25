@@ -12,6 +12,7 @@
     var main = document.getElementById("main");
     // SNSリンクから来た人がまず見られるよう、ログインは強制しない（認証は「支払う」時）
     var id = App.qs("plan");
+    var ref = App.qs("ref"); if (ref) api.trackReferralVisit(ref);   // 流入計測
     api.getPlan(id).then(function (p) {
       if (!p) { main.innerHTML = UI.empty("プランが見つかりませんでした。", "さがすへ", "search/index.html"); return; }
       main.innerHTML = form(p);
@@ -106,6 +107,7 @@
     pay.addEventListener("click", function () {
       var opts = {};
       if (p.format === "video" && picked) opts.slot = picked;
+      var ref = App.qs("ref"); if (ref) opts.ref = ref;
       authAndPay(p, opts);
     });
   }

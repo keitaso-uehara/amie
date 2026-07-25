@@ -82,6 +82,17 @@ window.App = (function () {
     return legacy();
   }
 
+  /* ネイティブ共有(navigator.share)→無ければコピー。resolve値: "shared"|"copied"|"canceled" */
+  function share(opts) {
+    opts = opts || {};
+    if (navigator.share) {
+      return navigator.share({ title: opts.title || "ELLMIE", text: opts.text || "", url: opts.url })
+        .then(function () { return "shared"; })
+        .catch(function () { return "canceled"; });
+    }
+    return copyText(opts.url).then(function () { return "copied"; });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var topbarEl = document.getElementById("topbar");
     if (topbarEl) {
@@ -123,5 +134,5 @@ window.App = (function () {
     }
   }
 
-  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks, downloadICS: downloadICS, absUrl: absUrl, copyText: copyText };
+  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks, downloadICS: downloadICS, absUrl: absUrl, copyText: copyText, share: share };
 })();

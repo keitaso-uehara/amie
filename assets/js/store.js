@@ -227,6 +227,7 @@ window.api = (function () {
         minutes: plan.minutes || null,
         addons: [],
         rescheduled: false,
+        ref: opts.ref || null,            // 流入元(出品者のシェアリンク)
         createdLabel: "たった今"
       };
       st.orders.push(order);
@@ -373,6 +374,23 @@ window.api = (function () {
       return Promise.resolve({ ok: true, net: amount - fee, fee: fee });
     },
     getPayouts: function () { return Promise.resolve((getState().withdrawals || []).slice().reverse()); },
+
+    /* ---------- リファラル計測(シェアリンクの効果) ---------- */
+    trackReferralVisit: function (ref) {
+      if (!ref) return Promise.resolve();
+      var st = getState();
+      st.refVisits = st.refVisits || {};
+      st.refVisits[ref] = (st.refVisits[ref] || 0) + 1;
+      setState(st);
+      return Promise.resolve();
+    },
+    getReferralStats: function (handle) {
+      var st = getState();
+      var visits = (st.refVisits || {})[handle] || 0;
+      var purchases = (st.orders || []).filter(function (o) { return o.ref === handle && o.status !== "canceled"; }).length;
+      var cvr = visits ? Math.round(purchases / visits * 1000) / 10 : 0;
+      return Promise.resolve({ visits: visits, purchases: purchases, cvr: cvr });
+    },
     /* 売上明細(確定申告用・CSV/PDF出力元)。宛名は出品者名 */
     getSalesRows: function () {
       var st = getState();
