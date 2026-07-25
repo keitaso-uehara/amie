@@ -36,6 +36,30 @@ window.App = (function () {
     return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
   }
 
+  /* 予約を .ics で書き出してカレンダーに追加(Google/Apple/Outlook 共通)。evt={title,start,minutes,desc,uid} */
+  function downloadICS(evt) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(evt.start));
+    if (!m) return;
+    var start = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    var end = new Date(start.getTime() + (evt.minutes || 60) * 60000);
+    var p = function (x) { return (x < 10 ? "0" : "") + x; };
+    var fmt = function (d) { return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "T" + p(d.getHours()) + p(d.getMinutes()) + "00"; };
+    var ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//ELLMIE//JP", "CALSCALE:GREGORIAN",
+      "BEGIN:VEVENT", "UID:" + (evt.uid || "ellmie-" + fmt(start)) + "@ellmie.com",
+      "DTSTART:" + fmt(start), "DTEND:" + fmt(end),
+      "SUMMARY:" + String(evt.title || "ELLMIE ビデオ相談"),
+      "DESCRIPTION:" + String(evt.desc || "ELLMIEのビデオ相談"),
+      "END:VEVENT", "END:VCALENDAR"
+    ].join("\r\n");
+    var blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "ELLMIE予約.ics";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var topbarEl = document.getElementById("topbar");
     if (topbarEl) {
@@ -77,5 +101,5 @@ window.App = (function () {
     }
   }
 
-  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks };
+  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks, downloadICS: downloadICS };
 })();

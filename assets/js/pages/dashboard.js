@@ -119,8 +119,10 @@
       '<p class="section__title">予約・取引の管理</p>' +
       orders.map(function (o) {
         var acts = "";
-        if (o.status === "progress" || o.status === "active") acts += '<button class="btn btn--sm btn--ghost" data-cancel="' + esc(o.id) + '">中止（全額返金）</button>';
+        if (o.format === "video" && o.status === "progress" && o.slot) acts += '<button class="btn btn--sm btn--outline" data-sresched="' + esc(o.id) + '">日時を変更</button>';
+        if (o.format === "video" && o.status === "progress" && o.slot) acts += '<button class="btn btn--sm btn--outline" data-ics="' + esc(o.id) + '">カレンダー</button>';
         if (o.status === "progress" && o.format !== "monthly") acts += '<button class="btn btn--sm btn--outline" data-scomplete="' + esc(o.id) + '">完了にする</button>';
+        if (o.status === "progress" || o.status === "active") acts += '<button class="btn btn--sm btn--ghost" data-cancel="' + esc(o.id) + '">中止（全額返金）</button>';
         return (
           '<div class="admin-row"><div class="admin-row__body">' +
           '<p class="admin-row__title">' + esc(o.plan ? o.plan.title : "(プラン)") + "</p>" +
@@ -187,6 +189,45 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-scomplete]"), function (b) {
       b.addEventListener("click", function () {
         api.completeOrder(b.dataset.scomplete).then(function () { UI.toast("完了にしました"); setTimeout(function () { location.reload(); }, 500); });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-sresched]"), function (b) {
+      b.addEventListener("click", function () { sellerReschedule(b.dataset.sresched); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-ics]"), function (b) {
+      b.addEventListener("click", function () {
+        api.getOrder(b.dataset.ics).then(function (o) {
+          if (!o) return;
+          App.downloadICS({ title: "ELLMIE ビデオ相談・" + (o.plan ? o.plan.title : ""), start: o.slot, minutes: o.minutes || (o.plan && o.plan.minutes) || 60, desc: o.plan ? o.plan.title : "" });
+          UI.toast("カレンダー用ファイルを書き出しました");
+        });
+      });
+    });
+  }
+
+  /* 出品者からの日時変更（購入者に通知・回数制限なし） */
+  function sellerReschedule(orderId) {
+    api.getOrder(orderId).then(function (o) {
+      if (!o) return;
+      var slots = (o.plan && o.plan.slots) || [];
+      var booked = (o.plan && o.plan.bookedSlots) || [];
+      var avail = slots.filter(function (v) { return booked.indexOf(v) === -1; });
+      if (!avail.length) { UI.toast("空き枠がありません。プランに枠を追加してください。"); return; }
+      var ov = UI.openSheet(
+        '<p class="sheet__q">予約日時を変更（出品者）</p>' +
+        '<p class="lead" style="margin-bottom:14px;">購入者に変更が通知されます。新しい枠を選んでください。</p>' +
+        '<div class="slot-grid">' + avail.map(function (v) {
+          var parts = App.slotLabel(v).split(" ");
+          return '<button class="slot" type="button" data-slot="' + esc(v) + '">' + esc(parts[0]) + "<small>" + esc(parts[1] || "") + "</small></button>";
+        }).join("") + "</div>"
+      );
+      Array.prototype.forEach.call(ov.querySelectorAll("[data-slot]"), function (b) {
+        b.addEventListener("click", function () {
+          api.rescheduleOrder(orderId, b.dataset.slot, { by: "seller" }).then(function () {
+            UI.closeSheet(); UI.toast("日時を変更しました（購入者に通知）");
+            setTimeout(function () { location.reload(); }, 500);
+          });
+        });
       });
     });
   }

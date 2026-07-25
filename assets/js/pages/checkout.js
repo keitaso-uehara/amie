@@ -54,11 +54,16 @@
     );
   }
 
+  function avail(p) {
+    var booked = p.bookedSlots || [];
+    return (p.slots || []).filter(function (v) { return booked.indexOf(v) === -1; });
+  }
   function slotBlock(p) {
-    var slots = p.slots || [];
+    var slots = avail(p);
     if (!slots.length) {
+      var full = p.slots && p.slots.length;
       return '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("calendar-event") +
-        " この出品者は、購入後にメッセージで日程を調整します。ご希望の候補をお伝えください。</div>";
+        (full ? " 現在ご予約可能な枠がありません。購入後にメッセージで日程を調整します。" : " この出品者は、購入後にメッセージで日程を調整します。ご希望の候補をお伝えください。") + "</div>";
     }
     return (
       '<p class="field-label">ビデオの予約枠を選択</p>' +
@@ -77,7 +82,7 @@
     var slots = document.getElementById("slots");
 
     function refresh() {
-      var needSlot = p.format === "video" && !!(p.slots && p.slots.length);
+      var needSlot = p.format === "video" && avail(p).length > 0;
       var ok = agree.checked && (!needSlot || picked !== null);
       pay.disabled = !ok;
     }

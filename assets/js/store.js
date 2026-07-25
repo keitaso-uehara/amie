@@ -87,6 +87,10 @@ window.api = (function () {
     p = clone(p);
     p.creator = allCreators().filter(function (c) { return c.id === p.creatorId; })[0] || null;
     p.reviews = reviewsFor(p.id);
+    // 予約済み枠(進行中/契約中の注文が押さえている枠)。空きの算出・ダブルブッキング防止に使う
+    p.bookedSlots = (getState().orders || []).filter(function (o) {
+      return o.planId === p.id && o.slot && (o.status === "progress" || o.status === "active");
+    }).map(function (o) { return o.slot; });
     return p;
   }
 
@@ -266,12 +270,27 @@ window.api = (function () {
       return Promise.resolve();
     },
     /* ビデオ予約の日時変更(1回まで・仕様書 確定事項)。締切前提のUI側で制御 */
-    rescheduleOrder: function (orderId, newSlot) {
+    rescheduleOrder: function (orderId, newSlot, opts) {
+      opts = opts || {};
       var st = getState();
       var done = null;
       st.orders.forEach(function (o) {
-        if (o.id === orderId && !o.rescheduled) { o.slot = newSlot; o.rescheduled = true; done = o; }
+        // 購入者は1回まで。出品者からの変更は回数制限なし
+        if (o.id === orderId && (opts.by === "seller" || !o.rescheduled)) {
+          o.slot = newSlot;
+          if (opts.by !== "seller") o.rescheduled = true;
+          done = o;
+        }
       });
+      if (done) {
+        st.threads[orderId] = st.threads[orderId] || [];
+        var lbl = window.App ? App.slotLabel(newSlot) : newSlot;
+        st.threads[orderId].push({
+          from: opts.by === "seller" ? "creator" : "me",
+          body: (opts.by === "seller" ? "出品者が予約日時を変更しました：" : "予約日時を変更しました：") + lbl,
+          timeLabel: "たった今", read: true
+        });
+      }
       setState(st);
       return Promise.resolve(done ? clone(done) : null);
     },

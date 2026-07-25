@@ -117,6 +117,8 @@
       btns.push('<a class="btn btn--sm btn--rose" href="' + h("call/index.html?order=" + o.id) + '">' + UI.icon("video") + " ビデオに入室</a>");
     if (o.format === "video" && o.status === "progress" && o.slot && !o.rescheduled && hasSlots)
       btns.push('<button class="btn btn--sm btn--outline" id="reschedule">' + UI.icon("calendar-event") + " 日時を変更</button>");
+    if (o.format === "video" && o.status === "progress" && o.slot)
+      btns.push('<button class="btn btn--sm btn--outline" id="ics">' + UI.icon("calendar-plus") + " カレンダーに追加</button>");
     if (o.status === "progress" || o.status === "active")
       btns.push('<button class="btn btn--sm btn--outline" id="tip">' + UI.icon("coin") + " 追加で支払う</button>");
     if (o.status === "progress" && o.format !== "monthly")
@@ -139,6 +141,15 @@
     if (t) t.addEventListener("click", function () { openTip(o); });
     var cn = document.getElementById("cancel");
     if (cn) cn.addEventListener("click", function () { openCancel(o); });
+    var ics = document.getElementById("ics");
+    if (ics) ics.addEventListener("click", function () {
+      App.downloadICS({
+        title: "ELLMIE ビデオ相談・" + (o.creator ? o.creator.name : "") + "さん",
+        start: o.slot, minutes: o.minutes || (o.plan && o.plan.minutes) || 60,
+        desc: o.plan ? o.plan.title : "ビデオ相談"
+      });
+      UI.toast("カレンダー用ファイルを書き出しました");
+    });
   }
 
   /* キャンセル・返金。形式と締切で挙動を分岐(ストアカ/ココナラ準拠) */
@@ -203,7 +214,8 @@
   /* 予約日時の変更(1回まで) */
   function openReschedule(o) {
     var slots = (o.plan && o.plan.slots) || [];
-    var avail = slots.filter(function (v) { return v !== o.slot; });
+    var booked = (o.plan && o.plan.bookedSlots) || [];
+    var avail = slots.filter(function (v) { return booked.indexOf(v) === -1; });
     if (!avail.length) { UI.toast("変更できる空き枠がありません。メッセージで相談してください。"); return; }
     var ov = UI.openSheet(
       '<p class="sheet__q">予約日時を変更</p>' +
