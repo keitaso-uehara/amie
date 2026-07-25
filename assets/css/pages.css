@@ -31,10 +31,14 @@
 .home-search input { flex: 1; border: none; outline: none; background: none; font-size: var(--fs-base); }
 
 /* ---------- 箱型TOP: カテゴリ横スクロール ---------- */
-/* カテゴリから探す: グループをタブで切替＋1行スクロール(コンパクト) */
-.cat-tabs { display: flex; gap: 8px; margin-bottom: var(--sp-3); }
-.cat-tab { padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid var(--line-d); background: #fff; font-size: 13px; font-weight: 700; color: var(--gray); cursor: pointer; }
-.cat-tab.is-on { background: var(--rose); border-color: var(--rose); color: #fff; }
+/* カテゴリから探す: 大カテゴリはセグメント型(3等分・折返し無し・美しく) */
+.cat-tabs { display: flex; gap: 4px; margin-bottom: var(--sp-3); background: var(--cream); border-radius: var(--r-pill); padding: 4px; }
+.cat-tab { flex: 1; padding: 9px 4px; border-radius: var(--r-pill); border: none; background: transparent; font-size: 13px; font-weight: 700; color: var(--gray); cursor: pointer; white-space: nowrap; text-align: center; transition: background .15s, color .15s; }
+.cat-tab.is-on { background: var(--rose); color: #fff; box-shadow: 0 1px 4px rgba(217, 110, 143, 0.35); }
+
+/* 検索/カテゴリ下層の並び替え */
+.sort-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 var(--sp-4); }
+.sort-select { flex: 0 0 auto; border: 1px solid var(--line-d); border-radius: var(--r-pill); background: #fff; color: var(--ink); font-size: var(--fs-sm); font-weight: 700; padding: 6px 12px; }
 .cat-scroll-g { display: flex; align-items: flex-start; gap: 12px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .cat-scroll-g::-webkit-scrollbar { display: none; }
 .cat-tile { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 60px; text-align: center; }

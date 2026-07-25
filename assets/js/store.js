@@ -101,7 +101,11 @@ window.api = (function () {
       var list = allCreators().map(hydrateCreator);
       if (params.cat) {
         var cats = String(params.cat).split(",");
-        list = list.filter(function (c) { return c.categories.some(function (x) { return cats.indexOf(x) !== -1; }); });
+        // メインカテゴリ(未設定なら先頭)で1回だけ表示＝カテゴリ横断の2重表示を防ぐ
+        list = list.filter(function (c) {
+          var main = c.mainCategory || (c.categories && c.categories[0]);
+          return cats.indexOf(main) !== -1;
+        });
       }
       if (params.concern) {
         var cs = String(params.concern).split(",");
@@ -500,6 +504,10 @@ window.api = (function () {
       if (data.tagline != null) seller.tagline = data.tagline;
       if (data.bio != null) seller.bio = data.bio;
       if (data.categories) seller.categories = data.categories;
+      if (data.mainCategory !== undefined) seller.mainCategory = data.mainCategory;
+      // メインが選択カテゴリに無ければ補正。未設定なら先頭を自動採用
+      if (seller.mainCategory && (seller.categories || []).indexOf(seller.mainCategory) === -1) seller.mainCategory = null;
+      if (!seller.mainCategory && (seller.categories || []).length) seller.mainCategory = seller.categories[0];
       if (data.sns) seller.sns = data.sns;
       st.mySeller = seller;
       setState(st);

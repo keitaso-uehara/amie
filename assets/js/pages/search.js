@@ -11,7 +11,8 @@
     concern: App.qs("concern") || "",
     format: App.qs("format") || "",
     type: App.qs("type") || "",
-    q: App.qs("q") || ""
+    q: App.qs("q") || "",
+    sort: App.qs("sort") || "popular"
   };
 
   document.addEventListener("DOMContentLoaded", render);
@@ -54,10 +55,13 @@
     var box = document.getElementById("results");
     if (state.tab === "plans") {
       api.getPlans(params()).then(function (list) {
-        box.innerHTML = list.length
-          ? '<p class="result-count">' + list.length + "件のプラン</p>" +
-            '<div class="section"><div class="plan-grid">' + list.map(UI.planCard).join("") + "</div></div>"
-          : UI.empty("条件に合うプランが見つかりませんでした。", "条件をリセット", "search/index.html");
+        if (!list.length) { box.innerHTML = UI.empty("条件に合うプランが見つかりませんでした。", "条件をリセット", "search/index.html"); return; }
+        list = sortPlans(list, state.sort);
+        box.innerHTML =
+          '<div class="sort-row"><p class="result-count">' + list.length + "件のプラン</p>" + sortSelect() + "</div>" +
+          '<div class="section"><div class="plan-grid">' + list.map(UI.planCard).join("") + "</div></div>";
+        var s = document.getElementById("sort");
+        if (s) s.addEventListener("change", function () { state.sort = this.value; load(); });
       });
     } else {
       api.getCreators(params()).then(function (list) {
@@ -95,6 +99,23 @@
       b.addEventListener("click", function () { state[b.dataset.clear] = ""; render(); });
     });
   }
+
+  /* 並び替え（ココナラ等のカテゴリ内ソートに倣う） */
+  function sortSelect() {
+    var opts = [["popular", "人気順"], ["new", "新着順"], ["trend", "急上昇"], ["price_asc", "価格が安い順"], ["rating", "評価が高い順"]];
+    return '<select class="sort-select" id="sort" aria-label="並び替え">' + opts.map(function (o) {
+      return '<option value="' + o[0] + '"' + (state.sort === o[0] ? " selected" : "") + ">" + o[1] + "</option>";
+    }).join("") + "</select>";
+  }
+  function sortPlans(list, sort) {
+    var a = list.slice();
+    if (sort === "new") return a.reverse();                                   // 新着(配列後方=新しい)
+    if (sort === "trend") return a.sort(function (x, y) { return trend(y) - trend(x); });   // 急上昇(PV)
+    if (sort === "price_asc") return a.sort(function (x, y) { return x.price - y.price; });
+    if (sort === "rating") return a.sort(function (x, y) { return (y.stats.rating || 0) - (x.stats.rating || 0) || (y.stats.sales || 0) - (x.stats.sales || 0); });
+    return a.sort(function (x, y) { return (y.stats.sales || 0) - (x.stats.sales || 0); });  // 人気(販売数)
+  }
+  function trend(p) { return p.stats.pv != null ? p.stats.pv : Math.round((p.stats.sales || 0) * 1.6 + (p.price % 40) * 4); }
 
   function label(list, slug) {
     var hit = list.filter(function (x) { return x.slug === slug; })[0];

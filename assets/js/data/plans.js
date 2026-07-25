@@ -114,7 +114,7 @@ window.DB.plans = [
         category: cat.slug,
         concerns: [],
         desc: cat.label + "に関するご相談に、あなたのペースで丁寧にお応えします。（デモ用サンプル）",
-        stats: { rating: Math.round((5.0 - (i % 5) * 0.1) * 10) / 10, sales: Math.max(4, 250 - i * 22 - (ci % 3) * 6) }
+        stats: { rating: Math.round((5.0 - (i % 5) * 0.1) * 10) / 10, sales: Math.max(4, 250 - i * 22 - (ci % 3) * 6), pv: ((ci * 17 + i * 41) % 90) * 6 + 40 }
       };
       if (fmt === "chat") p.chatDays = 7;
       if (fmt === "video") p.minutes = 60;

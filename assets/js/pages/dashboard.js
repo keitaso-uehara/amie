@@ -346,6 +346,8 @@
       '<div class="form-row"><label class="field-label">ひとこと</label><input class="field" id="s-tag" value="' + esc(seller.tagline || "") + '" placeholder="例）垢抜けメイクの伝道師"></div>' +
       '<div class="form-row"><label class="field-label">自己紹介・経歴</label><textarea class="field field--area" id="s-bio">' + esc(seller.bio || "") + "</textarea></div>" +
       '<div class="form-row"><label class="field-label">カテゴリ（最大3）</label><div class="tag-cloud" id="s-cats">' + cats + "</div></div>" +
+      '<div class="form-row"><label class="field-label">メインカテゴリ <span class="muted">（一覧はこの1つで表示・2重表示を防止）</span></label>' +
+      '<select class="field" id="s-main">' + mainOptions(seller.categories || [], seller.mainCategory) + "</select></div>" +
       '<div class="form-row"><label class="field-label">SNS連携（フォロワー数）</label>' +
       '<input class="field" id="s-ig" type="number" inputmode="numeric" placeholder="Instagram フォロワー数" value="' + (s.instagram || "") + '" style="margin-bottom:8px;">' +
       '<input class="field" id="s-tt" type="number" inputmode="numeric" placeholder="TikTok フォロワー数" value="' + (s.tiktok || "") + '">' +
@@ -356,6 +358,9 @@
       b.addEventListener("click", function () {
         if (!b.classList.contains("is-on") && ov.querySelectorAll("[data-cat].is-on").length >= 3) { UI.toast("カテゴリは最大3つまでです"); return; }
         b.classList.toggle("is-on");
+        var onCats = Array.prototype.map.call(ov.querySelectorAll("[data-cat].is-on"), function (x) { return x.dataset.cat; });
+        var main = ov.querySelector("#s-main");
+        main.innerHTML = mainOptions(onCats, onCats.indexOf(main.value) !== -1 ? main.value : onCats[0]);
       });
     });
     ov.querySelector("#s-save").addEventListener("click", function () {
@@ -367,11 +372,21 @@
         tagline: ov.querySelector("#s-tag").value.trim(),
         bio: ov.querySelector("#s-bio").value.trim(),
         categories: Array.prototype.map.call(ov.querySelectorAll("[data-cat].is-on"), function (b) { return b.dataset.cat; }),
+        mainCategory: ov.querySelector("#s-main").value || null,
         sns: sns
       }).then(function () {
         UI.closeSheet(); UI.toast("保存しました");
         setTimeout(function () { location.reload(); }, 400);
       });
     });
+  }
+
+  /* メインカテゴリの選択肢（選んだカテゴリの中から） */
+  function mainOptions(catSlugs, selected) {
+    if (!catSlugs.length) return '<option value="">先にカテゴリを選択してください</option>';
+    return catSlugs.map(function (slug) {
+      var t = TAX.categories.filter(function (c) { return c.slug === slug; })[0];
+      return '<option value="' + slug + '"' + (slug === selected ? " selected" : "") + ">" + esc(t ? t.label : slug) + "</option>";
+    }).join("");
   }
 })();
