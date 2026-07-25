@@ -70,18 +70,16 @@
 .feature-card--life { background: linear-gradient(135deg, #E9F1EC, #fff); }
 .feature-card--life .feature-card__title, .feature-card--life .feature-card__go { color: #5F7A67; }
 
-/* カテゴリ別ランキング */
-.rank-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--sand); }
-.rank-row:last-child { border-bottom: none; }
-.rank-row__no { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--sand); color: var(--gray); }
-.rank-row__no.rank-1 { background: var(--gold); color: #fff; }
-.rank-row__no.rank-2 { background: #C9CCD1; color: #fff; }
-.rank-row__no.rank-3 { background: #D9A679; color: #fff; }
-.rank-row__body { flex: 1; min-width: 0; }
-.rank-row__t { font-size: var(--fs-base); font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rank-row__m { font-size: var(--fs-sm); color: var(--gray); margin-top: 2px; }
-.rank-row__rating { flex: 0 0 auto; font-size: var(--fs-sm); color: var(--ink-soft); }
-.rank-row__rating i { color: var(--gold); font-size: 12px; }
+/* カテゴリ別ランキング（サムネイル付きカード＋順位バッジ・横スライド） */
+.rank-scroll { display: flex; gap: var(--sp-3); overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.rank-scroll::-webkit-scrollbar { display: none; }
+.rank-item { flex: 0 0 158px; position: relative; }
+.rank-item .plan-card { width: 100%; }
+.rank-item .plan-card__title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 40px; }
+.rank-badge { position: absolute; top: 8px; left: 8px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; background: var(--rose); box-shadow: 0 1px 5px rgba(43,35,32,0.28); }
+.rank-badge.rank-1 { background: var(--gold); }
+.rank-badge.rank-2 { background: #9AA0A6; }
+.rank-badge.rank-3 { background: #C08457; }
 
 /* ELLMIEの説明 */
 .about-band { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-5); text-align: center; }

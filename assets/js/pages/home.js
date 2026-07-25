@@ -127,17 +127,13 @@
       '<div class="section">' +
       '<p class="section__title">カテゴリ別ランキング</p>' +
       '<div class="cat-tabs" id="rk-tabs">' + tabs + "</div>" +
-      '<div id="rk-list">' + rankList(rkData[0].plans) + "</div></div>"
+      '<div class="rank-scroll" id="rk-list">' + rankItems(rkData[0].plans) + "</div></div>"
     );
   }
-  function rankList(plans) {
-    return plans.slice(0, 5).map(function (p, i) {
-      var c = p.creator || {};
-      return '<a class="rank-row" href="' + h("plans/show.html?id=" + p.id) + '">' +
-        '<span class="rank-row__no rank-' + (i + 1) + '">' + (i + 1) + "</span>" +
-        '<div class="rank-row__body"><p class="rank-row__t">' + esc(p.title) + "</p>" +
-        '<p class="rank-row__m">' + esc(c.name) + " ・ " + App.money(p.price) + "</p></div>" +
-        '<span class="rank-row__rating">' + UI.icon("star-filled") + " " + p.stats.rating + "</span></a>";
+  /* サムネイル付きカード＋順位バッジ（ココナラ式） */
+  function rankItems(plans) {
+    return plans.slice(0, 6).map(function (p, i) {
+      return '<div class="rank-item"><span class="rank-badge rank-' + (i + 1) + '">' + (i + 1) + "</span>" + UI.planCard(p) + "</div>";
     }).join("");
   }
   function bindRanking() {
@@ -147,7 +143,7 @@
       var b = e.target.closest("[data-rk]"); if (!b) return;
       Array.prototype.forEach.call(tabs.querySelectorAll(".cat-tab"), function (x) { x.classList.toggle("is-on", x === b); });
       var d = rkData.filter(function (x) { return x.slug === b.dataset.rk; })[0];
-      if (d) document.getElementById("rk-list").innerHTML = rankList(d.plans);
+      if (d) document.getElementById("rk-list").innerHTML = rankItems(d.plans);
     });
   }
 
