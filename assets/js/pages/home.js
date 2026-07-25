@@ -8,19 +8,20 @@
 
   var GROUP_CLASS = { "ビューティー": "beauty", "ファッション": "fashion", "ライフスタイル": "life" };
   var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
+  var usersSorted = [];   // 人気のユーザー（フォロワー数順・グループ切替用）
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
     Promise.all([
-      api.getFeaturedCreators(8),
+      api.getCreators({}),
       api.getPlans()
     ]).then(function (res) {
-      var creators = res[0], plans = res[1] || [];
+      var creators = res[0] || [], plans = res[1] || [];
       var popular = plans.slice().sort(function (a, b) { return (b.stats.sales || 0) - (a.stats.sales || 0); });
       main.innerHTML =
         searchBar() +
         featuresShelf() +
-        usersShelf(creators) +
+        usersSection(creators) +
         categorySection() +
         recommendShelf(popular.slice(0, 8)) +
         rankingSection(plans) +
@@ -29,6 +30,7 @@
         UI.siteFooter();
       bindSearch();
       bindCategoryTabs();
+      bindUsers();
     });
   });
 
@@ -58,14 +60,46 @@
     );
   }
 
-  /* ③ 人気のユーザー（1列スライド） */
-  function usersShelf(creators) {
+  /* ③ 人気のユーザー（総合ランキング＋グループ選択ランキング） */
+  function followerTotal(c) { var s = c.sns || {}; return (s.instagram || 0) + (s.tiktok || 0) + (s.youtube || 0) + (s.x || 0); }
+  function catGroup(slug) { var c = TAX.categories.filter(function (x) { return x.slug === slug; })[0]; return c ? c.group : null; }
+  function usersRow(sorted, moreHref) {
+    var cards = sorted.slice(0, 5).map(function (c, i) {
+      return '<div class="rank-user"><span class="rank-badge rank-' + (i + 1) + '">' + (i + 1) + "</span>" + UI.creatorMini(c) + "</div>";
+    }).join("");
+    var more = sorted.length > 5
+      ? '<a class="rank-more-card" href="' + h(moreHref) + '"><span class="rank-more-card__ic">' + UI.icon("arrow-right") + "</span>もっと見る</a>"
+      : "";
+    return cards + more;
+  }
+  function groupUsersRow(group) {
+    var slugs = TAX.categories.filter(function (c) { return c.group === group; }).map(function (c) { return c.slug; });
+    var inGroup = usersSorted.filter(function (c) { return slugs.indexOf(c.mainCategory || (c.categories && c.categories[0])) !== -1; });
+    return usersRow(inGroup, "search/index.html?tab=creators&cat=" + slugs.join(","));
+  }
+  function usersSection(creators) {
+    usersSorted = creators.slice().sort(function (a, b) { return followerTotal(b) - followerTotal(a); });
+    var tabs = GROUPS.map(function (g, i) {
+      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-ug="' + esc(g) + '">' + esc(g) + "</button>";
+    }).join("");
     return (
       '<div class="section">' +
-      '<p class="section__title">人気のユーザー' +
-      '<a class="more" href="' + h("search/index.html?tab=creators") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
-      '<div class="creator-scroll">' + creators.map(UI.creatorMini).join("") + "</div></div>"
+      '<p class="section__title">人気のユーザー</p>' +
+      '<p class="rank-group__label">総合</p>' +
+      '<div class="rank-scroll">' + usersRow(usersSorted, "search/index.html?tab=creators") + "</div>" +
+      '<div class="cat-tabs" id="user-tabs" style="margin-top:18px;">' + tabs + "</div>" +
+      '<div class="rank-scroll" id="user-group-row">' + groupUsersRow(GROUPS[0]) + "</div>" +
+      "</div>"
     );
+  }
+  function bindUsers() {
+    var tabs = document.getElementById("user-tabs");
+    if (!tabs) return;
+    tabs.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-ug]"); if (!b) return;
+      Array.prototype.forEach.call(tabs.querySelectorAll(".cat-tab"), function (x) { x.classList.toggle("is-on", x === b); });
+      document.getElementById("user-group-row").innerHTML = groupUsersRow(b.dataset.ug);
+    });
   }
 
   /* ④ カテゴリ（グループタブ＋1行スクロール） */

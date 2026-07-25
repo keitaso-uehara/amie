@@ -12,7 +12,8 @@
     format: App.qs("format") || "",
     type: App.qs("type") || "",
     q: App.qs("q") || "",
-    sort: App.qs("sort") || "popular"
+    sort: App.qs("sort") || "popular",
+    csort: App.qs("csort") || "popular"
   };
 
   var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
@@ -90,10 +91,13 @@
       });
     } else {
       api.getCreators(params()).then(function (list) {
-        box.innerHTML = list.length
-          ? '<p class="result-count">' + list.length + "名の出品者</p>" +
-            '<div class="section stack">' + list.map(UI.creatorCard).join("") + "</div>"
-          : UI.empty("条件に合う出品者が見つかりませんでした。", "条件をリセット", "search/index.html");
+        if (!list.length) { box.innerHTML = UI.empty("条件に合う出品者が見つかりませんでした。", "条件をリセット", "search/index.html"); return; }
+        list = sortCreators(list, state.csort);
+        box.innerHTML =
+          '<div class="sort-row"><p class="result-count">' + list.length + "名の出品者</p>" + creatorSortSelect() + "</div>" +
+          '<div class="section stack">' + list.map(UI.creatorCard).join("") + "</div>";
+        var s = document.getElementById("sort");
+        if (s) s.addEventListener("change", function () { state.csort = this.value; load(); });
       });
     }
   }
@@ -152,6 +156,23 @@
     return a.sort(function (x, y) { return (y.stats.sales || 0) - (x.stats.sales || 0); });  // 人気(販売数)
   }
   function trend(p) { return p.stats.pv != null ? p.stats.pv : Math.round((p.stats.sales || 0) * 1.6 + (p.price % 40) * 4); }
+
+  /* 出品者の並び替え（ココナラ等の実績・評価・フォロワーに倣う） */
+  function creatorSortSelect() {
+    var opts = [["popular", "人気順"], ["followers", "フォロワーが多い順"], ["rating", "評価が高い順"], ["sales", "実績が多い順"], ["new", "新着順"]];
+    return '<select class="sort-select" id="sort" aria-label="並び替え">' + opts.map(function (o) {
+      return '<option value="' + o[0] + '"' + (state.csort === o[0] ? " selected" : "") + ">" + o[1] + "</option>";
+    }).join("") + "</select>";
+  }
+  function followers(c) { var s = c.sns || {}; return (s.instagram || 0) + (s.tiktok || 0) + (s.youtube || 0) + (s.x || 0); }
+  function sortCreators(list, sort) {
+    var a = list.slice();
+    if (sort === "new") return a.reverse();
+    if (sort === "followers") return a.sort(function (x, y) { return followers(y) - followers(x); });
+    if (sort === "rating") return a.sort(function (x, y) { return (y.stats.rating || 0) - (x.stats.rating || 0) || (y.stats.sales || 0) - (x.stats.sales || 0); });
+    if (sort === "sales") return a.sort(function (x, y) { return (y.stats.sales || 0) - (x.stats.sales || 0); });
+    return a.sort(function (x, y) { return followers(y) - followers(x) || (y.stats.sales || 0) - (x.stats.sales || 0); });  // 人気(フォロワー＋実績)
+  }
 
   function label(list, slug) {
     var hit = list.filter(function (x) { return x.slug === slug; })[0];

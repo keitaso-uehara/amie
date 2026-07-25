@@ -102,12 +102,14 @@ window.DB.plans = [
   var PRICES = [3000, 5000, 2000, 8000, 4000, 6000, 2500, 12000, 3500, 9000];
   var FORMATS = ["chat", "video", "monthly", "chat", "video", "chat", "monthly", "video", "chat", "chat"];
   window.TAX.categories.forEach(function (cat, ci) {
+    var demoCreators = window.DB.creators.filter(function (c) { return c.mainCategory === cat.slug && String(c.id).indexOf("cg_") === 0; });
     var have = window.DB.plans.filter(function (p) { return p.category === cat.slug; }).length;
     for (var i = have; i < 10; i++) {
       var fmt = FORMATS[i % FORMATS.length];
+      var cr = demoCreators.length ? demoCreators[i % demoCreators.length] : window.DB.creators[(ci + i) % window.DB.creators.length];
       var p = {
         id: "pg_" + cat.slug + "_" + i,
-        creatorId: creators[(ci + i) % creators.length],
+        creatorId: cr.id,
         title: TT[i % TT.length].replace("{L}", cat.label),
         format: fmt,
         price: PRICES[(ci + i) % PRICES.length],
@@ -120,6 +122,7 @@ window.DB.plans = [
       if (fmt === "video") p.minutes = 60;
       if (fmt === "monthly") { p.monthlyVideos = 1; p.chatIncluded = true; }
       window.DB.plans.push(p);
+      if (cr.planIds) cr.planIds.push(p.id);
     }
   });
 })();

@@ -105,3 +105,32 @@ window.DB.creators = [
     planIds: ["p016"]
   }
 ];
+
+/* デモ用：各カテゴリに出品者を追加（人気のユーザーのグループ別ランキングを充実させる）。
+   TAX はこのファイルより前に読み込まれる。plans.js がこの出品者にデモプランを紐づける。 */
+(function () {
+  if (!window.TAX || !window.TAX.categories) return;
+  var NAMES = ["yuki", "mao", "rena", "aoi", "hina", "miku", "nao", "rin", "sara", "emi",
+               "kana", "yui", "mika", "airi", "noa", "riko", "aya", "mei", "koko", "nana"];
+  var TYPES = [["influencer", "インフルエンサー", true], ["pro", "プロ", true],
+               ["celebrity", "タレント・モデル", true], ["general", "発信中", false]];
+  var n = 0;
+  window.TAX.categories.forEach(function (cat, ci) {
+    for (var i = 0; i < 3; i++) {
+      var nm = NAMES[n % NAMES.length]; n++;
+      var t = TYPES[(ci + i) % TYPES.length];
+      var ig = (((ci * 7 + i * 23) % 95) + 5) * 1000;   // 5千〜10万
+      window.DB.creators.push({
+        id: "cg_" + cat.slug + "_" + i,
+        name: nm, handle: nm + "_ellmie",
+        type: t[0], typeLabel: t[1], verified: t[2],
+        tagline: cat.label + "のこと、相談どうぞ",
+        bio: cat.label + "に関するご相談を受けています。（デモ用サンプル）",
+        categories: [cat.slug], mainCategory: cat.slug, concerns: [],
+        sns: { instagram: ig, tiktok: Math.round(ig * 0.55) },
+        stats: { sales: 40 + ((ci * 13 + i * 29) % 160), rating: Math.round((4.6 + ((7 - i) % 4) * 0.08) * 10) / 10, repeat: 25 + ((ci + i) % 45) },
+        planIds: []
+      });
+    }
+  });
+})();
