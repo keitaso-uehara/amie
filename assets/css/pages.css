@@ -306,6 +306,21 @@
 .pay-method__body small { display: block; color: var(--gray); font-size: 12px; margin-top: 1px; }
 .pay-method__badge i { font-size: 18px; color: var(--gray); display: block; }
 
+/* 出品者の予約枠エディタ */
+.slot-add { display: flex; gap: 8px; align-items: center; }
+.slot-add .field { flex: 1; }
+.slot-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.slot-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--rose-pale); color: var(--rose-deep); border-radius: var(--r-pill); padding: 6px 6px 6px 12px; font-size: 13px; font-weight: 700; }
+.slot-chip button { border: none; background: rgba(43,35,32,0.08); border-radius: 50%; width: 20px; height: 20px; display: grid; place-items: center; color: var(--rose-deep); font-size: 13px; cursor: pointer; }
+
+/* 追加支払い(おひねり/延長) */
+.tip-opts { display: flex; gap: 8px; }
+.tip-opts .tip-opt { flex: 1; }
+.tip-opt.is-on { background: var(--rose); color: #fff; border-color: var(--rose); }
+
+/* 通話のサブ注記 */
+.call__note--sub { opacity: 0.85; font-size: 12px; }
+
 /* ---------- S9 レビュー: 星入力 ---------- */
 .star-input { display: flex; gap: 6px; }
 .star-input button { font-size: 34px; color: var(--gray-ll); }

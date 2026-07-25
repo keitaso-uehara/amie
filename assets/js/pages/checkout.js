@@ -6,11 +6,7 @@
   var esc = function (s) { return App.esc(s); };
   var h = function (p) { return App.href(p); };
 
-  var SLOTS = [
-    { d: "7/25(金)", t: "20:00" }, { d: "7/26(土)", t: "11:00" }, { d: "7/26(土)", t: "15:00" },
-    { d: "7/27(日)", t: "10:00" }, { d: "7/27(日)", t: "19:00" }, { d: "7/28(月)", t: "21:00" }
-  ];
-  var picked = null;
+  var picked = null;   // 選択中の予約枠(datetime-local文字列)
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
@@ -35,7 +31,7 @@
       '<div class="order-card__row total"><span>お支払い' + (p.format === "monthly" ? "（初月）" : "") + "</span><span>" + App.money(p.price) + "</span></div>" +
       "</div>" +
 
-      (p.format === "video" ? slotBlock() : "") +
+      (p.format === "video" ? slotBlock(p) : "") +
 
       '<p class="field-label">お支払い方法</p>' +
       '<div class="pay-method">' +
@@ -58,14 +54,20 @@
     );
   }
 
-  function slotBlock() {
+  function slotBlock(p) {
+    var slots = p.slots || [];
+    if (!slots.length) {
+      return '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("calendar-event") +
+        " この出品者は、購入後にメッセージで日程を調整します。ご希望の候補をお伝えください。</div>";
+    }
     return (
       '<p class="field-label">ビデオの予約枠を選択</p>' +
       '<div class="slot-grid" id="slots">' +
-      SLOTS.map(function (s, i) {
-        return '<button class="slot" type="button" data-i="' + i + '">' + esc(s.d) + "<small>" + esc(s.t) + "</small></button>";
+      slots.map(function (v) {
+        var parts = App.slotLabel(v).split(" ");
+        return '<button class="slot" type="button" data-slot="' + esc(v) + '">' + esc(parts[0]) + "<small>" + esc(parts[1] || "") + "</small></button>";
       }).join("") + "</div>" +
-      '<p class="field-note" style="margin-bottom:16px;">開始24時間前まで無料でキャンセル・日時変更できます。</p>'
+      '<p class="field-note" style="margin-bottom:16px;">開始24時間前まで無料でキャンセル・日時変更（1回）できます。</p>'
     );
   }
 
@@ -75,25 +77,26 @@
     var slots = document.getElementById("slots");
 
     function refresh() {
-      var ok = agree.checked && (p.format !== "video" || picked !== null);
+      var needSlot = p.format === "video" && !!(p.slots && p.slots.length);
+      var ok = agree.checked && (!needSlot || picked !== null);
       pay.disabled = !ok;
     }
     agree.addEventListener("change", refresh);
 
     if (slots) {
       slots.addEventListener("click", function (e) {
-        var b = e.target.closest("[data-i]");
+        var b = e.target.closest("[data-slot]");
         if (!b) return;
         slots.querySelectorAll(".slot").forEach(function (s) { s.classList.remove("is-on"); });
         b.classList.add("is-on");
-        picked = Number(b.dataset.i);
+        picked = b.dataset.slot;
         refresh();
       });
     }
 
     pay.addEventListener("click", function () {
       var opts = {};
-      if (p.format === "video" && picked !== null) opts.slot = SLOTS[picked].d + " " + SLOTS[picked].t;
+      if (p.format === "video" && picked) opts.slot = picked;
       api.purchase(p.id, opts).then(function (order) { done(p, order); });
     });
   }
@@ -106,7 +109,7 @@
       '<div class="done__icon">' + UI.icon("circle-check-filled") + "</div>" +
       '<p class="done__title">お申し込み完了！</p>' +
       '<p class="lead">' + esc(c.name) + "さんとのメッセージルームが開きました。" +
-      (p.format === "video" && order.slot ? "<br>予約：" + esc(order.slot) : "") + "</p>" +
+      (p.format === "video" && order.slot ? "<br>予約：" + esc(App.slotLabel(order.slot)) : "") + "</p>" +
       '<div class="stack" style="margin-top:24px;">' +
       '<a class="btn btn--rose btn--block" href="' + h("messages/index.html?order=" + order.id) + '">メッセージを開く</a>' +
       '<a class="btn btn--ghost btn--block" href="' + h("me/index.html") + '">マイページへ</a>' +

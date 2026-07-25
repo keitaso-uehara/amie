@@ -11,7 +11,7 @@
   var createdPlan = null;
   var draft = {
     name: "", tagline: "", bio: "", categories: [], sns: {},
-    format: "chat", title: "", category: "", price: "", desc: ""
+    format: "chat", title: "", category: "", price: "", desc: "", slots: []
   };
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -165,17 +165,47 @@
     if (draft.format === "chat")
       return '<label class="field-label">相談期間</label><select class="field" id="o-chatDays"><option value="3">3日間</option><option value="7" selected>7日間</option><option value="14">14日間</option></select>';
     if (draft.format === "video")
-      return '<label class="field-label">ビデオ通話の長さ</label><select class="field" id="o-minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option></select>';
+      return '<label class="field-label">ビデオ通話の長さ</label><select class="field" id="o-minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option></select>' +
+        '<label class="field-label" style="margin-top:14px;">予約可能な開始枠 <span class="muted">（15分刻み・任意）</span></label>' +
+        '<div class="slot-add"><input class="field" type="datetime-local" id="o-slot-input" step="900"><button type="button" class="btn btn--outline btn--sm" id="o-slot-add">追加</button></div>' +
+        '<div class="slot-chips" id="o-slot-chips"></div>' +
+        '<p class="field-note">購入者はここで選んだ枠から予約します。空でもOK（購入後にメッセージで調整）。</p>';
     return '<label class="field-label">月のビデオ回数</label><select class="field" id="o-monthlyVideos"><option value="0">0回（チャットのみ）</option><option value="1">月1回</option><option value="2" selected>月2回</option><option value="4">月4回</option></select>';
+  }
+
+  /* 予約枠エディタ(ビデオ時のみDOMに存在) */
+  function renderOnbSlotChips() {
+    var el = document.getElementById("o-slot-chips"); if (!el) return;
+    el.innerHTML = draft.slots.length
+      ? draft.slots.map(function (s, i) { return '<span class="slot-chip">' + esc(App.slotLabel(s)) + '<button type="button" data-rm="' + i + '" aria-label="削除">' + UI.icon("x") + "</button></span>"; }).join("")
+      : '<span class="muted" style="font-size:13px;">まだ枠がありません。日時を追加してください。</span>';
+    Array.prototype.forEach.call(el.querySelectorAll("[data-rm]"), function (b) {
+      b.addEventListener("click", function () { draft.slots.splice(Number(b.dataset.rm), 1); renderOnbSlotChips(); });
+    });
+  }
+  function wireOnbSlots() {
+    var add = document.getElementById("o-slot-add"); if (!add) return;
+    renderOnbSlotChips();
+    add.addEventListener("click", function () {
+      var inp = document.getElementById("o-slot-input");
+      var v = inp.value;
+      if (!v) return UI.toast("日時を選んでください");
+      if (draft.slots.indexOf(v) !== -1) return UI.toast("同じ枠があります");
+      draft.slots.push(v); draft.slots.sort();
+      renderOnbSlotChips();
+      inp.value = "";
+    });
   }
 
   function bind2() {
     document.getElementById("o-fmt-fields").innerHTML = fmtFields();
+    wireOnbSlots();
     document.getElementById("o-fmt").addEventListener("click", function (e) {
       var b = e.target.closest("[data-fmt]"); if (!b) return;
       draft.format = b.dataset.fmt;
       document.querySelectorAll("#o-fmt .seg__item").forEach(function (x) { x.classList.toggle("is-on", x.dataset.fmt === draft.format); });
       document.getElementById("o-fmt-fields").innerHTML = fmtFields();
+      wireOnbSlots();
     });
     document.getElementById("o-back").addEventListener("click", function () { capture(); step = 1; render(); });
     document.getElementById("o-publish").addEventListener("click", function () {
@@ -188,7 +218,7 @@
       var data = { title: draft.title, format: draft.format, price: price, desc: draft.desc, category: draft.category };
       var f;
       if (draft.format === "chat") { f = document.getElementById("o-chatDays"); data.chatDays = Number(f ? f.value : 7); }
-      if (draft.format === "video") { f = document.getElementById("o-minutes"); data.minutes = Number(f ? f.value : 60); }
+      if (draft.format === "video") { f = document.getElementById("o-minutes"); data.minutes = Number(f ? f.value : 60); data.slots = draft.slots.slice(); }
       if (draft.format === "monthly") { f = document.getElementById("o-monthlyVideos"); data.monthlyVideos = Number(f ? f.value : 0); }
       api.createPlan(data).then(function (plan) { createdPlan = plan; step = 3; render(); })
         .catch(function () { UI.toast("公開に失敗しました。時間をおいて再度お試しください"); });

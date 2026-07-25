@@ -213,6 +213,9 @@ window.api = (function () {
         price: plan.price,
         status: plan.format === "monthly" ? "active" : "progress",
         slot: opts.slot || null,          // ビデオの予約枠
+        minutes: plan.minutes || null,
+        addons: [],
+        rescheduled: false,
         createdLabel: "たった今"
       };
       st.orders.push(order);
@@ -252,6 +255,31 @@ window.api = (function () {
       setState(st);
       return Promise.resolve();
     },
+    /* ビデオ予約の日時変更(1回まで・仕様書 確定事項)。締切前提のUI側で制御 */
+    rescheduleOrder: function (orderId, newSlot) {
+      var st = getState();
+      var done = null;
+      st.orders.forEach(function (o) {
+        if (o.id === orderId && !o.rescheduled) { o.slot = newSlot; o.rescheduled = true; done = o; }
+      });
+      setState(st);
+      return Promise.resolve(done ? clone(done) : null);
+    },
+    /* 追加支払い(おひねり/延長)。都度課金型でポイント不使用(8.5)。売上に加算・スレッドに記録 */
+    addAddon: function (orderId, amount, label, extraMinutes) {
+      var st = getState();
+      amount = Number(amount) || 0;
+      st.orders.forEach(function (o) {
+        if (o.id === orderId) {
+          o.addons = o.addons || [];
+          o.addons.push({ amount: amount, label: label || "追加", minutes: Number(extraMinutes) || 0 });
+        }
+      });
+      st.threads[orderId] = st.threads[orderId] || [];
+      st.threads[orderId].push({ from: "me", body: (label || "追加のお支払い") + "（+¥" + amount.toLocaleString("ja-JP") + "）を購入しました", timeLabel: "たった今", read: true });
+      setState(st);
+      return Promise.resolve({ ok: true });
+    },
 
     /* ---------- メッセージ(取引スレッド) ---------- */
     getThreads: function () {
@@ -287,7 +315,7 @@ window.api = (function () {
         desc: data.desc, stats: { rating: 0, sales: 0 }
       };
       if (data.format === "chat") plan.chatDays = data.chatDays || 7;
-      if (data.format === "video") plan.minutes = data.minutes || 60;
+      if (data.format === "video") { plan.minutes = data.minutes || 60; plan.slots = data.slots || []; }
       if (data.format === "monthly") { plan.monthlyVideos = data.monthlyVideos || 0; plan.chatIncluded = true; }
       st.myPlans.push(plan);
       seller.planIds.push(id);

@@ -6,6 +6,7 @@
   var h = function (p) { return App.href(p); };
   var MIN = 1000, CAP = 100000;   // 4.5 価格ルール
   var format = "chat";
+  var slots = [];   // ビデオの予約可能枠(datetime-local文字列)
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
@@ -53,17 +54,47 @@
     if (format === "chat")
       return '<label class="field-label">相談期間</label><select class="field" id="chatDays"><option value="3">3日間</option><option value="7" selected>7日間</option><option value="14">14日間</option></select>';
     if (format === "video")
-      return '<label class="field-label">ビデオ通話の長さ</label><select class="field" id="minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option></select>';
+      return '<label class="field-label">ビデオ通話の長さ</label><select class="field" id="minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option></select>' +
+        '<label class="field-label" style="margin-top:14px;">予約可能な開始枠 <span class="muted">（15分刻み・任意）</span></label>' +
+        '<div class="slot-add"><input class="field" type="datetime-local" id="slot-input" step="900"><button type="button" class="btn btn--outline btn--sm" id="slot-add">追加</button></div>' +
+        '<div class="slot-chips" id="slot-chips"></div>' +
+        '<p class="field-note">購入者はここで選んだ枠から予約します。空のままなら、購入後にメッセージで日程を調整します。</p>';
     return '<label class="field-label">月のビデオ回数</label><select class="field" id="monthlyVideos"><option value="0">0回（チャットのみ）</option><option value="1">月1回</option><option value="2" selected>月2回</option><option value="4">月4回</option></select>';
+  }
+
+  /* 予約枠エディタ(ビデオ時のみDOMに存在) */
+  function renderSlotChips() {
+    var el = document.getElementById("slot-chips"); if (!el) return;
+    el.innerHTML = slots.length
+      ? slots.map(function (s, i) { return '<span class="slot-chip">' + esc(App.slotLabel(s)) + '<button type="button" data-rm="' + i + '" aria-label="削除">' + UI.icon("x") + "</button></span>"; }).join("")
+      : '<span class="muted" style="font-size:13px;">まだ枠がありません。日時を追加してください。</span>';
+    Array.prototype.forEach.call(el.querySelectorAll("[data-rm]"), function (b) {
+      b.addEventListener("click", function () { slots.splice(Number(b.dataset.rm), 1); renderSlotChips(); });
+    });
+  }
+  function wireSlots() {
+    var add = document.getElementById("slot-add"); if (!add) return;   // ビデオ以外は無い
+    renderSlotChips();
+    add.addEventListener("click", function () {
+      var inp = document.getElementById("slot-input");
+      var v = inp.value;
+      if (!v) return UI.toast("日時を選んでください");
+      if (slots.indexOf(v) !== -1) return UI.toast("同じ枠があります");
+      slots.push(v); slots.sort();
+      renderSlotChips();
+      inp.value = "";
+    });
   }
 
   function bind() {
     document.getElementById("fmt-fields").innerHTML = fmtFields();
+    wireSlots();
     document.getElementById("fmt").addEventListener("click", function (e) {
       var b = e.target.closest("[data-fmt]"); if (!b) return;
       format = b.dataset.fmt;
       document.querySelectorAll("#fmt .seg__item").forEach(function (x) { x.classList.toggle("is-on", x.dataset.fmt === format); });
       document.getElementById("fmt-fields").innerHTML = fmtFields();
+      wireSlots();
     });
 
     document.getElementById("submit").addEventListener("click", function () {
@@ -77,7 +108,7 @@
 
       var data = { title: title, format: format, price: price, desc: desc, category: document.getElementById("cat").value };
       if (format === "chat") data.chatDays = Number(document.getElementById("chatDays").value);
-      if (format === "video") data.minutes = Number(document.getElementById("minutes").value);
+      if (format === "video") { data.minutes = Number(document.getElementById("minutes").value); data.slots = slots.slice(); }
       if (format === "monthly") data.monthlyVideos = Number(document.getElementById("monthlyVideos").value);
 
       api.createPlan(data).then(function (plan) {

@@ -17,6 +17,16 @@ window.App = (function () {
   /* 金額表示(税込・カンマ区切り)。手数料は購入者に見せない(仕様書 0.3) */
   function money(n) { return "¥" + Number(n || 0).toLocaleString("ja-JP"); }
 
+  /* 予約枠ラベル。"YYYY-MM-DDTHH:MM"(datetime-local) → "M/D(曜) HH:MM"。旧形式の自由文字列はそのまま */
+  var _WD = ["日", "月", "火", "水", "木", "金", "土"];
+  function slotLabel(v) {
+    if (!v) return "";
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(v));
+    if (!m) return String(v);
+    var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    return (d.getMonth() + 1) + "/" + d.getDate() + "(" + _WD[d.getDay()] + ") " + m[4] + ":" + m[5];
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var topbarEl = document.getElementById("topbar");
     if (topbarEl) {
@@ -58,5 +68,5 @@ window.App = (function () {
     }
   }
 
-  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money };
+  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel };
 })();
