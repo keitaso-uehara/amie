@@ -13,15 +13,18 @@
     var main = document.getElementById("main");
     Promise.all([
       api.getFeaturedCreators(8),
+      api.getPopularPlans(6),
       api.getNewPlans(6)
     ]).then(function (res) {
-      var creators = res[0], plans = res[1];
+      var creators = res[0], popular = res[1], newest = res[2];
       main.innerHTML =
         searchBar() +
         categoryGrid() +
+        featuresShelf() +
         featuredShelf(creators) +
         concernShelf() +
-        plansShelf(plans) +
+        plansShelf(popular) +
+        newPlansShelf(newest) +
         recruitSection() +
         UI.siteFooter();
       bindSearch();
@@ -52,7 +55,23 @@
     return '<div class="cat-grid2">' + tiles + all + "</div>";
   }
 
-  /* ③ 注目の出品者の棚 */
+  /* ③ 特集・ピックアップ（運営CMSで編集する想定のバナー棚） */
+  function featuresShelf() {
+    var items = window.DB.features || [];
+    if (!items.length) return "";
+    return (
+      '<div class="section">' +
+      '<p class="section__title">特集・ピックアップ</p>' +
+      '<div class="feature-scroll">' + items.map(function (f) {
+        return '<a class="feature-card feature-card--' + esc(f.tone || "rose") + '" href="' + h("search/index.html?" + f.q) + '">' +
+          '<p class="feature-card__title">' + esc(f.title) + "</p>" +
+          '<p class="feature-card__sub">' + esc(f.sub) + "</p>" +
+          '<span class="feature-card__go">見る ' + UI.icon("arrow-right") + "</span></a>";
+      }).join("") + "</div></div>"
+    );
+  }
+
+  /* ④ 注目の出品者の棚 */
   function featuredShelf(creators) {
     return (
       '<div class="section">' +
@@ -84,7 +103,18 @@
     );
   }
 
-  /* ⑥ 出品者募集（購入者ファーストなので小さく下部に） */
+  /* ⑦ 新着プランの棚 */
+  function newPlansShelf(plans) {
+    if (!plans.length) return "";
+    return (
+      '<div class="section">' +
+      '<p class="section__title">新着プラン' +
+      '<a class="more" href="' + h("search/index.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
+      '<div class="plan-grid">' + plans.map(UI.planCard).join("") + "</div></div>"
+    );
+  }
+
+  /* ⑧ 出品者募集（購入者ファーストなので小さく下部に） */
   function recruitSection() {
     return (
       '<div class="section">' +

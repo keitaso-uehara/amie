@@ -159,6 +159,13 @@ window.api = (function () {
       var list = allPlans().map(hydratePlan).slice().reverse();
       return Promise.resolve(n ? list.slice(0, n) : list);
     },
+    /* 人気順(販売数→評価)。TOPの「人気のプラン」棚に使う */
+    getPopularPlans: function (n) {
+      var list = allPlans().map(hydratePlan).sort(function (a, b) {
+        return (b.stats.sales || 0) - (a.stats.sales || 0) || (b.stats.rating || 0) - (a.stats.rating || 0);
+      });
+      return Promise.resolve(n ? list.slice(0, n) : list);
+    },
 
     /* ---------- レビュー ---------- */
     getReviews: function (planId) {
