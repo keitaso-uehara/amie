@@ -15,6 +15,31 @@
     sort: App.qs("sort") || "popular"
   };
 
+  var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
+  function groupOf(slug) {
+    var c = TAX.categories.filter(function (x) { return x.slug === slug; })[0];
+    return c ? c.group : GROUPS[0];
+  }
+  function groupCatSlugs(group) {
+    return TAX.categories.filter(function (c) { return c.group === group; }).map(function (c) { return c.slug; });
+  }
+
+  /* カテゴリ下層で他カテゴリへ切り替えるナビ（大カテゴリ segmented ＋ 小カテゴリ chips） */
+  function categoryNav() {
+    if (!state.cat) return "";
+    var first = state.cat.split(",")[0];
+    var group = groupOf(first);
+    var isAll = state.cat.indexOf(",") !== -1;   // カンマ = グループ総合（すべて）
+    var gTabs = GROUPS.map(function (g) {
+      return '<button class="cat-tab' + (g === group ? " is-on" : "") + '" data-navg="' + esc(g) + '">' + esc(g) + "</button>";
+    }).join("");
+    var chips = '<button class="pill sub-chip' + (isAll ? " is-on" : "") + '" data-navcat="__all__">すべて</button>' +
+      TAX.categories.filter(function (c) { return c.group === group; }).map(function (c) {
+        return '<button class="pill sub-chip' + (!isAll && c.slug === first ? " is-on" : "") + '" data-navcat="' + esc(c.slug) + '">' + esc(c.label) + "</button>";
+      }).join("");
+    return '<div class="cat-nav"><div class="cat-tabs">' + gTabs + "</div>" + '<div class="sub-chips">' + chips + "</div></div>";
+  }
+
   document.addEventListener("DOMContentLoaded", render);
 
   function render() {
@@ -25,10 +50,9 @@
   }
 
   function head() {
-    var catLabel = state.cat ? label(TAX.categories, state.cat) : "";
+    // カテゴリは下のカテゴリナビで切替（悩みタグのみ context chip に残す）
     var concernLabel = state.concern ? label(TAX.concerns, state.concern) : "";
     var contextChips = [];
-    if (catLabel) contextChips.push('<span class="filter-chip is-on" data-clear="cat">' + UI.icon("x") + " " + esc(catLabel) + "</span>");
     if (concernLabel) contextChips.push('<span class="filter-chip is-on" data-clear="concern">' + UI.icon("x") + " #" + esc(concernLabel) + "</span>");
 
     var formats = [["", "すべて"], ["chat", "チャット"], ["video", "ビデオ"], ["monthly", "月額"]];
@@ -45,6 +69,7 @@
       '<button class="tab' + (state.tab === "plans" ? " is-on" : "") + '" data-tab="plans">プラン</button>' +
       '<button class="tab' + (state.tab === "creators" ? " is-on" : "") + '" data-tab="creators">出品者</button>' +
       "</div></div>" +
+      categoryNav() +
       (state.tab === "plans"
         ? '<div class="filter-row">' + contextChips.join("") + formatChips + "</div>"
         : (contextChips.length ? '<div class="filter-row">' + contextChips.join("") + "</div>" : ""))
@@ -97,6 +122,17 @@
     });
     document.querySelectorAll("[data-clear]").forEach(function (b) {
       b.addEventListener("click", function () { state[b.dataset.clear] = ""; render(); });
+    });
+    document.querySelectorAll("[data-navg]").forEach(function (b) {
+      b.addEventListener("click", function () { state.cat = groupCatSlugs(b.dataset.navg).join(","); render(); });
+    });
+    document.querySelectorAll("[data-navcat]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.cat = b.dataset.navcat === "__all__"
+          ? groupCatSlugs(groupOf(state.cat.split(",")[0])).join(",")
+          : b.dataset.navcat;
+        render();
+      });
     });
   }
 
