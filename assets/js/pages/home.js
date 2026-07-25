@@ -1,5 +1,7 @@
-/* S1 TOP
-   並び: ヒーロー → カテゴリ → 注目の出品者 → 新着プラン → 悩みタグ → 利用の流れ → 出品者募集 → フッター
+/* S1 TOP（箱型マーケットプレイス型）
+   並び: 検索バー → カテゴリ横スクロール → 近日開始バナー → 注目の出品者の棚
+        → 人気のプランの棚 → 事前登録CTA → 出品者募集 → フッター
+   （ココナラ/メルカリ型の"見慣れた箱型"。詳細は beauty-mentor-spec/画面構成メモ_プレローンチ.md）
    クエリ読取→api→描画 の3層を守る。 */
 (function () {
   var esc = function (s) { return App.esc(s); };
@@ -13,84 +15,83 @@
     ]).then(function (res) {
       var creators = res[0], plans = res[1];
       main.innerHTML =
-        hero() +
-        catSection() +
-        featuredSection(creators) +
-        newPlansSection(plans) +
-        concernSection() +
-        stepsSection() +
+        searchBar() +
+        categoryRow() +
+        promoBanner() +
+        featuredShelf(creators) +
+        plansShelf(plans) +
+        preRegCTA() +
         recruitSection() +
         UI.siteFooter();
-      bindHero();
+      bindSearch();
     });
   });
 
-  function hero() {
+  /* ① 検索バー（上部・目的が明確な人の主導線） */
+  function searchBar() {
     return (
-      '<div class="hero">' +
-      '<p class="hero__logo">amie</p>' +
-      '<p class="hero__copy">憧れの人に、相談できる。</p>' +
-      '<p class="hero__sub">メイク・美容・ファッション・暮らしのこと。</p>' +
-      '<form id="home-search" class="search-cta">' + UI.icon("search") +
-      '<input name="q" type="search" placeholder="やりたいこと・お名前で探す">' +
-      '<button class="search-cta__btn" type="submit">探す</button></form>' +
-      "</div>"
+      '<div class="home-search-wrap">' +
+      '<form id="home-search" class="home-search">' + UI.icon("search") +
+      '<input name="q" type="search" placeholder="やりたいこと・お名前で探す" autocomplete="off">' +
+      "</form></div>"
     );
   }
 
-  function catSection() {
-    var cells = TAX.categories.map(function (c) {
-      return '<a class="cat-cell" href="' + h("search/index.html?cat=" + c.slug) + '">' +
-        UI.icon(c.icon) + "<span>" + esc(c.label) + "</span></a>";
+  /* ② カテゴリの横スクロール（見慣れたカテゴリナビ・ブラウズ派の主導線） */
+  function categoryRow() {
+    var chips = TAX.categories.map(function (c) {
+      return '<a class="cat-chip" href="' + h("search/index.html?cat=" + c.slug) + '">' +
+        '<span class="cat-chip__ic">' + UI.icon(c.icon) + "</span>" +
+        '<span class="cat-chip__l">' + esc(c.label) + "</span></a>";
     }).join("");
+    var all = '<a class="cat-chip" href="' + h("search/index.html") + '">' +
+      '<span class="cat-chip__ic cat-chip__ic--all">' + UI.icon("dots") + "</span>" +
+      '<span class="cat-chip__l">すべて</span></a>';
+    return '<div class="cat-row">' + chips + all + "</div>";
+  }
+
+  /* ③ 近日開始バナー（新サービスなので"何ができるか"を明示） */
+  function promoBanner() {
+    return (
+      '<div class="section" style="padding-top:12px;padding-bottom:8px;">' +
+      '<div class="promo">' +
+      '<span class="promo__badge">近日開始・事前登録受付中</span>' +
+      '<p class="promo__copy">憧れの人に、相談できる。</p>' +
+      '<p class="promo__sub">メイク・コーデ・暮らしを、憧れの人が直接アドバイス。</p>' +
+      "</div></div>"
+    );
+  }
+
+  /* ④ 注目の出品者の棚 */
+  function featuredShelf(creators) {
     return (
       '<div class="section">' +
-      '<p class="section__title">カテゴリから探す</p>' +
-      '<div class="cat-grid">' + cells + "</div></div>"
-    );
-  }
-
-  function featuredSection(creators) {
-    return (
-      '<div class="section hr">' +
       '<p class="section__title">注目の出品者' +
       '<a class="more" href="' + h("search/index.html?tab=creators") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
       '<div class="creator-scroll">' + creators.map(UI.creatorMini).join("") + "</div></div>"
     );
   }
 
-  function newPlansSection(plans) {
+  /* ⑤ 人気のプランの棚 */
+  function plansShelf(plans) {
     return (
-      '<div class="section hr">' +
-      '<p class="section__title">新着のプラン' +
+      '<div class="section">' +
+      '<p class="section__title">人気のプラン' +
       '<a class="more" href="' + h("search/index.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
       '<div class="plan-grid">' + plans.map(UI.planCard).join("") + "</div></div>"
     );
   }
 
-  function concernSection() {
-    var tags = TAX.concerns.map(function (c) {
-      return '<a class="pill pill--outline" href="' + h("search/index.html?concern=" + c.slug) + '">#' + esc(c.label) + "</a>";
-    }).join("");
+  /* ⑥ 事前登録CTA */
+  function preRegCTA() {
     return (
-      '<div class="section hr">' +
-      '<p class="section__title">お悩みから探す</p>' +
-      '<div class="tag-cloud">' + tags + "</div></div>"
+      '<div class="section" style="padding-top:8px;">' +
+      '<a class="prereg-cta" href="' + h("login/index.html") + '">' + UI.icon("bell") + " 開始したら通知を受け取る</a>" +
+      "</div>"
     );
   }
 
-  function stepsSection() {
-    return (
-      '<div class="section hr">' +
-      '<p class="section__title">amieの使い方</p>' +
-      '<div class="steps">' +
-      '<div class="step"><span class="step__no">1</span><p class="step__t">さがす</p><p class="step__d">憧れの人・悩みで</p></div>' +
-      '<div class="step"><span class="step__no">2</span><p class="step__t">はなす</p><p class="step__d">チャット / ビデオ</p></div>' +
-      '<div class="step"><span class="step__no">3</span><p class="step__t">なりたい私へ</p><p class="step__d">その日から変わる</p></div>' +
-      "</div></div>"
-    );
-  }
-
+  /* ⑦ 出品者募集（購入者ファーストなので小さく下部に） */
   function recruitSection() {
     return (
       '<div class="section">' +
@@ -102,7 +103,7 @@
     );
   }
 
-  function bindHero() {
+  function bindSearch() {
     var f = document.getElementById("home-search");
     if (f) f.addEventListener("submit", function (e) {
       e.preventDefault();

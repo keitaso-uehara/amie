@@ -20,6 +20,40 @@
 .search-cta input { flex: 1; border: none; outline: none; background: none; }
 .search-cta__btn { background: var(--rose); color: #fff; height: 38px; padding: 0 var(--sp-4); border-radius: var(--r-pill); font-weight: 700; }
 
+/* ---------- 箱型TOP: 検索バー ---------- */
+.home-search-wrap { padding: var(--sp-3) var(--sp-4) var(--sp-2); }
+.home-search {
+  display: flex; align-items: center; gap: 8px;
+  height: 46px; padding: 0 var(--sp-4);
+  background: var(--cream); border: 1px solid var(--rose-line); border-radius: var(--r-pill);
+}
+.home-search i { color: var(--rose); font-size: 20px; }
+.home-search input { flex: 1; border: none; outline: none; background: none; font-size: var(--fs-base); }
+
+/* ---------- 箱型TOP: カテゴリ横スクロール ---------- */
+.cat-row { display: flex; gap: var(--sp-3); overflow-x: auto; padding: var(--sp-2) var(--sp-4) var(--sp-3); scrollbar-width: none; }
+.cat-row::-webkit-scrollbar { display: none; }
+.cat-chip { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 60px; text-align: center; }
+.cat-chip__ic { width: 52px; height: 52px; border-radius: var(--r-md); background: var(--rose-pale); display: grid; place-items: center; }
+.cat-chip__ic i { font-size: 23px; color: var(--rose-deep); }
+.cat-chip__ic--all { background: var(--sand); }
+.cat-chip__ic--all i { color: var(--gray); }
+.cat-chip__l { font-size: var(--fs-xs); color: var(--ink); line-height: 1.3; }
+
+/* ---------- 箱型TOP: 近日開始バナー ---------- */
+.promo { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-4); }
+.promo__badge { display: inline-block; font-size: var(--fs-xs); font-weight: 700; color: var(--rose-deep); background: #fff; padding: 3px 11px; border-radius: var(--r-pill); margin-bottom: var(--sp-2); }
+.promo__copy { font-size: var(--fs-xl); font-weight: 700; margin-bottom: 3px; }
+.promo__sub { font-size: var(--fs-md); color: var(--ink-soft); }
+
+/* ---------- 箱型TOP: 事前登録CTA ---------- */
+.prereg-cta {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  height: 50px; background: var(--rose); color: #fff;
+  border-radius: var(--r-md); font-size: var(--fs-lg); font-weight: 700;
+}
+.prereg-cta i { font-size: 20px; }
+
 /* カテゴリグリッド */
 .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); }
 .cat-cell {

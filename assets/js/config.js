@@ -6,8 +6,9 @@
    store.js の代わりに store.supabase.js を読み込む。
    ========================================================= */
 window.AMIE_CONFIG = {
-  // "mock"=localStorage / "supabase"=Supabase(下記)
-  backend: "supabase",
+  // "mock"=localStorage(データ入りのたたき台向け) / "supabase"=本番クラウド(下記)
+  // ※ 構成のたたき台確認中は mock。本番クラウドに繋ぐ時は "supabase" に戻す（＋クラウドにseed投入）
+  backend: "mock",
 
   // 本番 Supabase（info@blue-co.jp's Project・東京リージョン）
   // anonキーは公開キー（RLSで保護）。service_roleキーはここに置かないこと。
