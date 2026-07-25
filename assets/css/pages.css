@@ -299,6 +299,13 @@
 .onb-next__t { font-size: var(--fs-base); font-weight: 700; color: var(--ink); }
 .onb-next__d { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.6; margin-top: 2px; }
 
+/* 決済方法（登録済みカード表示） */
+.pay-method { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line-d); border-radius: var(--r-md); padding: 12px 14px; }
+.pay-method__ic i { font-size: 24px; color: var(--rose-deep); display: block; }
+.pay-method__body { flex: 1; font-size: var(--fs-base); color: var(--ink); }
+.pay-method__body small { display: block; color: var(--gray); font-size: 12px; margin-top: 1px; }
+.pay-method__badge i { font-size: 18px; color: var(--gray); display: block; }
+
 /* ---------- S9 レビュー: 星入力 ---------- */
 .star-input { display: flex; gap: 6px; }
 .star-input button { font-size: 34px; color: var(--gray-ll); }

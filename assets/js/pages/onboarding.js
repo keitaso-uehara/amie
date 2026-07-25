@@ -90,7 +90,7 @@
       '<div class="form-row"><label class="field-label">SNS <span class="muted">（任意・連携で認証バッジ）</span></label>' +
       '<div class="onb-sns">' + UI.icon("brand-instagram") + '<input class="field" id="o-ig" type="number" inputmode="numeric" placeholder="Instagram フォロワー数" value="' + (s.instagram || "") + '"></div>' +
       '<div class="onb-sns">' + UI.icon("brand-tiktok") + '<input class="field" id="o-tt" type="number" inputmode="numeric" placeholder="TikTok フォロワー数" value="' + (s.tiktok || "") + '"></div>' +
-      '<p class="field-note">実装では各SNSのOAuth連携で自動取得し、認証バッジを付与します。</p></div>' +
+      '<p class="field-note">入力したフォロワー数はプロフィールに表示されます。SNS連携で認証バッジを取得できます。</p></div>' +
 
       '<button class="btn btn--rose btn--block" id="o-next">次へ（最初のプランをつくる）</button>' +
       '<p class="onb-foot">' + UI.icon("shield-check") + " 本人確認が必要なのは、売上を出金するときだけです。</p>" +

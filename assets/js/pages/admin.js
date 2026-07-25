@@ -11,7 +11,7 @@
   function render() {
     var main = document.getElementById("main");
     main.innerHTML =
-      '<div class="page-head"><h1>運営管理</h1><p class="muted" style="font-size:12px;">デモ環境。実装では権限ロール（閲覧/対応/管理者）で保護します。</p></div>' +
+      '<div class="page-head"><h1>運営管理</h1><p class="muted" style="font-size:12px;">権限ロール（閲覧／対応／管理者）で保護されています。</p></div>' +
       '<div class="admin-tabs">' +
       atab("patrol", "パトロール") + atab("reports", "通報") + atab("payouts", "決済・出金") + atab("cms", "CMS") +
       "</div><div id="+'"abody"'+"></div>";
@@ -93,11 +93,11 @@
       '<div class="section" style="padding-top:16px;">' +
       '<p class="section__title" style="font-size:14px;">注目の出品者・特集</p>' +
       '<p class="lead" style="margin-bottom:10px;">TOPの「注目の出品者」掲載枠と特集ページを編成します。</p>' +
-      '<button class="btn btn--outline btn--block btn--sm" data-toast="編成を保存しました（デモ）" style="margin-bottom:20px;">掲載枠を編集</button>' +
+      '<button class="btn btn--outline btn--block btn--sm" data-toast="編成を保存しました" style="margin-bottom:20px;">掲載枠を編集</button>' +
       '<p class="section__title" style="font-size:14px;">お知らせ配信</p>' +
       '<input class="field" placeholder="お知らせのタイトル" style="margin-bottom:10px;">' +
       '<textarea class="field field--area" placeholder="本文"></textarea>' +
-      '<button class="btn btn--rose btn--block" data-toast="お知らせを配信しました（デモ）" style="margin-top:12px;">配信する</button>' +
+      '<button class="btn btn--rose btn--block" data-toast="お知らせを配信しました" style="margin-top:12px;">配信する</button>' +
       "</div>"
     );
   }

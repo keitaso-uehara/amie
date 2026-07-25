@@ -38,7 +38,11 @@
       (p.format === "video" ? slotBlock() : "") +
 
       '<p class="field-label">お支払い方法</p>' +
-      '<div class="pay-mock">' + UI.icon("credit-card") + " Visa •••• 4242（登録済み・モック）<br>※ 実装では Stripe で安全に決済します。5万円超は3Dセキュア必須。</div>" +
+      '<div class="pay-method">' +
+      '<span class="pay-method__ic">' + UI.icon("credit-card") + "</span>" +
+      '<span class="pay-method__body"><b>Visa</b> •••• 4242<small>有効期限 12/28</small></span>' +
+      '<span class="pay-method__badge">' + UI.icon("lock") + "</span></div>" +
+      '<p class="field-note">お支払い情報は暗号化して安全に処理されます。5万円を超えるお支払いには本人認証（3Dセキュア）が必要です。</p>' +
 
       (p.format === "monthly"
         ? '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);margin-top:16px;">' + UI.icon("refresh") + " 毎月自動更新されます。いつでも解約でき、解約後も現在の請求期間の終わりまでご利用いただけます。</div>"

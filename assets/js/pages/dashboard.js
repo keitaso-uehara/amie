@@ -1,4 +1,4 @@
-/* S11 出品者ダッシュボード（デモ）
+/* S11 出品者ダッシュボード
    プロトでは出品者 c001(MOEKA) を「あなた」として売上・取引・プラン・宣伝リンク・上限を表示。
    手数料20%(仕様書 8.2)で受取額を算出。将来は自分の出品者アカウントに紐づく。 */
 (function () {
@@ -117,7 +117,7 @@
     var copy = document.getElementById("copy");
     if (copy) copy.addEventListener("click", function () { UI.toast("宣伝リンクをコピーしました"); });
     var lm = document.getElementById("limit");
-    if (lm) lm.addEventListener("click", function () { UI.toast("本人確認(eKYC)へ進みます（デモ）"); });
+    if (lm) lm.addEventListener("click", function () { UI.toast("本人確認（eKYC）を開始します。確認後、価格上限が解除されます。"); });
     var es = document.getElementById("edit-seller");
     if (es) es.addEventListener("click", function () { openSellerEdit(mySeller); });
   }
@@ -139,7 +139,7 @@
       '<div class="form-row"><label class="field-label">SNS連携（フォロワー数）</label>' +
       '<input class="field" id="s-ig" type="number" inputmode="numeric" placeholder="Instagram フォロワー数" value="' + (s.instagram || "") + '" style="margin-bottom:8px;">' +
       '<input class="field" id="s-tt" type="number" inputmode="numeric" placeholder="TikTok フォロワー数" value="' + (s.tiktok || "") + '">' +
-      '<p class="field-note">実装では各SNSのOAuth連携で自動取得し、認証バッジを付与します。</p></div>' +
+      '<p class="field-note">入力したフォロワー数はプロフィールに表示されます。SNS連携で認証バッジを取得できます。</p></div>' +
       '<button class="btn btn--rose btn--block" id="s-save">保存する</button>'
     );
     ov.querySelectorAll("[data-cat]").forEach(function (b) {
