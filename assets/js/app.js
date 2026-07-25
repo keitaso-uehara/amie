@@ -60,6 +60,28 @@ window.App = (function () {
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  /* 共有用の絶対URL（現在地からの相対パスを絶対化） */
+  function absUrl(path) { return new URL(href(path), location.href).href; }
+
+  /* クリップボードにコピー（Clipboard API→旧execCommandへフォールバック）。Promiseを返す */
+  function copyText(text) {
+    function legacy() {
+      return new Promise(function (resolve, reject) {
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "0"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          var ok = document.execCommand("copy"); document.body.removeChild(ta);
+          ok ? resolve() : reject(new Error("copy failed"));
+        } catch (e) { reject(e); }
+      });
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () { return legacy(); });
+    }
+    return legacy();
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var topbarEl = document.getElementById("topbar");
     if (topbarEl) {
@@ -101,5 +123,5 @@ window.App = (function () {
     }
   }
 
-  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks, downloadICS: downloadICS };
+  return { root: root, href: href, qs: qs, esc: esc, goto: goto, money: money, slotLabel: slotLabel, addWeeks: addWeeks, downloadICS: downloadICS, absUrl: absUrl, copyText: copyText };
 })();

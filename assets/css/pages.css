@@ -336,6 +336,18 @@
 .pay-method__body small { display: block; color: var(--gray); font-size: 12px; margin-top: 1px; }
 .pay-method__badge i { font-size: 18px; color: var(--gray); display: block; }
 
+/* SNS流入導線: 購入画面の出品者ヘッダー */
+.checkout-creator { display: flex; align-items: center; gap: 12px; margin-bottom: var(--sp-4); }
+.checkout-creator__name { font-weight: 700; font-size: var(--fs-lg); display: flex; align-items: center; gap: 4px; }
+.checkout-creator__sub { font-size: var(--fs-sm); color: var(--gray); }
+
+/* シェア(出品者のリンク一覧) */
+.plan-share { margin: 12px 0; }
+.share-list { display: flex; flex-direction: column; gap: 8px; }
+.share-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--cream); border-radius: var(--r-md); padding: 8px 8px 8px 12px; }
+.share-row__t { flex: 1; font-size: var(--fs-sm); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.share-row__t i { color: var(--rose-deep); flex: 0 0 auto; }
+
 /* 出品者の予約枠エディタ */
 .slot-add { display: flex; gap: 8px; align-items: center; }
 .slot-add .field { flex: 1; }

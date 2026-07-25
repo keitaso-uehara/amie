@@ -10,7 +10,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
-    if (!api.getSession()) { App.goto("login/index.html"); return; }
+    // SNSリンクから来た人がまず見られるよう、ログインは強制しない（認証は「支払う」時）
     var id = App.qs("plan");
     api.getPlan(id).then(function (p) {
       if (!p) { main.innerHTML = UI.empty("プランが見つかりませんでした。", "さがすへ", "search/index.html"); return; }
@@ -23,6 +23,9 @@
     var c = p.creator || {};
     return (
       '<div class="section">' +
+      '<div class="checkout-creator">' + UI.avatar(c, "avatar--lg") +
+      '<div><p class="checkout-creator__name">' + esc(c.name) + "さん" + (c.verified ? UI.verified() : "") + "</p>" +
+      '<p class="checkout-creator__sub">への相談を申し込みます</p></div></div>' +
       '<p class="section__title">お支払い</p>' +
 
       '<div class="order-card">' +
@@ -50,6 +53,7 @@
 
       '<button class="btn btn--rose btn--block" id="pay" disabled>' + App.money(p.price) + " を支払う</button>" +
       '<p class="field-note center" style="margin-top:10px;">お支払いは取引完了までELLMIEがお預かりします（エスクロー）。</p>' +
+      '<p class="field-note center">はじめての方も、購入と同時にアカウントが作成されます。事前の会員登録は不要です。</p>' +
       "</div>"
     );
   }
@@ -102,7 +106,9 @@
     pay.addEventListener("click", function () {
       var opts = {};
       if (p.format === "video" && picked) opts.slot = picked;
-      api.purchase(p.id, opts).then(function (order) { done(p, order); });
+      // 認証はこの瞬間だけ（未ログインなら購入と同時にアカウント作成＝SNS流入の摩擦を最小化）
+      var go = function () { api.purchase(p.id, opts).then(function (order) { done(p, order); }); };
+      if (!api.getSession()) { api.login().then(go); } else { go(); }
     });
   }
 

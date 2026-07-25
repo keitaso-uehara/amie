@@ -27,7 +27,7 @@
           limitBox() +
           myPlansSection(myPlans, mySeller) +
           sampleSection(sample) +
-          promoSection(mySeller) +
+          promoSection(mySeller, myPlans) +
           UI.siteFooter();
         bind(mySeller, bal);
       });
@@ -156,23 +156,38 @@
     );
   }
 
-  function promoSection(seller) {
-    var url = "https://ellmie.com/@" + (seller.handle || "you");
+  function promoSection(seller, myPlans) {
+    var planLinks = (myPlans || []).map(function (p) {
+      return '<div class="share-row"><span class="share-row__t">' + UI.icon("link") + " " + esc(p.title) + "</span>" +
+        '<button class="btn btn--sm btn--outline" data-copyplan="' + esc(p.id) + '">コピー</button></div>';
+    }).join("");
     return (
       '<div class="section hr">' +
-      '<p class="section__title">宣伝リンク</p>' +
-      '<p class="lead" style="margin-bottom:10px;">SNSのプロフィールやストーリーズに貼って、ファンを呼び込みましょう。経由の流入・購入を計測できます。</p>' +
-      '<div class="search-bar" style="background:var(--cream);"><span class="muted" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(url) + "</span>" +
-      '<button class="btn btn--sm btn--rose" id="copy">コピー</button></div>' +
-      '<div class="stat-row" style="margin-top:14px;">' +
+      '<p class="section__title">シェアして集客</p>' +
+      '<p class="lead" style="margin-bottom:12px;">SNSのプロフィールやストーリーズに貼るだけ。タップした人は<b>そのまま相談を購入</b>できます（登録は購入時でOK）。</p>' +
+      '<div class="share-row"><span class="share-row__t">' + UI.icon("user") + " プロフィール（全プランを表示）</span>" +
+      '<button class="btn btn--sm btn--rose" id="copy-profile">コピー</button></div>' +
+      (planLinks ? '<p class="field-label" style="margin-top:14px;">プランごとの購入リンク（ストーリーズ向け）</p><div class="share-list">' + planLinks + "</div>" : "") +
+      '<div class="stat-row" style="margin-top:16px;">' +
       UI.statTile("今月の流入", "0", "") + UI.statTile("経由購入", "0", "件") + UI.statTile("転換率", "—", "") +
       "</div></div>"
     );
   }
 
   function bind(mySeller, bal) {
-    var copy = document.getElementById("copy");
-    if (copy) copy.addEventListener("click", function () { UI.toast("宣伝リンクをコピーしました"); });
+    var cp = document.getElementById("copy-profile");
+    if (cp) cp.addEventListener("click", function () {
+      App.copyText(App.absUrl("creators/show.html?id=" + mySeller.id))
+        .then(function () { UI.toast("プロフィールのリンクをコピーしました"); })
+        .catch(function () { UI.toast("コピーできませんでした"); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-copyplan]"), function (b) {
+      b.addEventListener("click", function () {
+        App.copyText(App.absUrl("checkout/index.html?plan=" + b.dataset.copyplan))
+          .then(function () { UI.toast("購入リンクをコピーしました"); })
+          .catch(function () { UI.toast("コピーできませんでした"); });
+      });
+    });
     var lm = document.getElementById("limit");
     if (lm) lm.addEventListener("click", function () { UI.toast("本人確認（eKYC）を開始します。確認後、価格上限が解除されます。"); });
     var es = document.getElementById("edit-seller");

@@ -17,6 +17,7 @@
       document.title = p.title + " | ELLMIE";
       main.innerHTML = view(p) + UI.siteFooter();
       mountBuybar(p);
+      bindShare(p);
     });
   });
 
@@ -40,6 +41,8 @@
       UI.snsFollowers(c, { compact: true }) +
       "</div>" + UI.icon("chevron-right") +
       "</a>" +
+
+      '<button class="btn btn--outline btn--sm plan-share" id="share-plan">' + UI.icon("share") + " このプランのリンクをコピー</button>" +
 
       /* スペック表 */
       specList(p) +
@@ -116,8 +119,17 @@
     });
 
     bar.querySelector("#buy").addEventListener("click", function () {
-      if (!api.getSession()) { App.goto("login/index.html?next=" + encodeURIComponent("plans/show.html?id=" + p.id)); return; }
+      // ログインは購入(支払い)時に。ここでは止めない＝SNS流入の摩擦を減らす
       App.goto("checkout/index.html?plan=" + p.id);
+    });
+  }
+
+  function bindShare(p) {
+    var b = document.getElementById("share-plan");
+    if (b) b.addEventListener("click", function () {
+      App.copyText(App.absUrl("checkout/index.html?plan=" + p.id)).then(function () {
+        UI.toast("購入リンクをコピーしました");
+      }).catch(function () { UI.toast("コピーに失敗しました"); });
     });
   }
 })();
