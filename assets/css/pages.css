@@ -46,24 +46,23 @@
 .cat-nav .cat-tabs { margin: 0 var(--sp-4) var(--sp-2); }
 .cat-scroll-g { display: flex; align-items: flex-start; gap: 12px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .cat-scroll-g::-webkit-scrollbar { display: none; }
-.cat-tile { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 60px; text-align: center; }
-.cat-tile__ic { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; }
-.cat-tile__ic i { font-size: 21px; }
-.cat-tile__l { font-size: 10.5px; color: var(--ink); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cat-tile { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 7px; width: 62px; text-align: center; }
+.cat-tile__ic { position: relative; width: 54px; height: 54px; border-radius: 18px; display: grid; place-items: center; overflow: hidden; }
+/* 上側に淡いハイライトを重ねてジュエル調の艶を出す */
+.cat-tile__ic::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 55%); }
+.cat-tile__ic i { position: relative; font-size: 24px; color: #fff; }
+.cat-tile__l { font-size: 10.5px; color: var(--ink); font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* プラン横スライド(TOPの人気/新着。6枚を縦に積まず1行で) */
 .plan-scroll { display: flex; gap: var(--sp-3); overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .plan-scroll::-webkit-scrollbar { display: none; }
 .plan-scroll .plan-card { flex: 0 0 158px; }
 .plan-scroll .plan-card__title { -webkit-line-clamp: 2; min-height: 40px; }
-.cat-tile--beauty .cat-tile__ic { background: var(--rose-pale); }
-.cat-tile--beauty .cat-tile__ic i { color: var(--rose-deep); }
-.cat-tile--fashion .cat-tile__ic { background: var(--gold-pale); }
-.cat-tile--fashion .cat-tile__ic i { color: var(--gold); }
-.cat-tile--life .cat-tile__ic { background: #E9F1EC; }
-.cat-tile--life .cat-tile__ic i { color: #6E8B76; }
-.cat-tile--all .cat-tile__ic { background: var(--sand); }
-.cat-tile--all .cat-tile__ic i { color: var(--gray); }
+/* 豪華＝グループ配色のグラデ＋白アイコン＋やわらかな同系色シャドウ（ジュエル調） */
+.cat-tile--beauty .cat-tile__ic { background: linear-gradient(145deg, #F0A9C2, #D96E8F); box-shadow: 0 5px 13px rgba(217,110,143,0.34); }
+.cat-tile--fashion .cat-tile__ic { background: linear-gradient(145deg, #E0C588, #C29A54); box-shadow: 0 5px 13px rgba(194,154,84,0.34); }
+.cat-tile--life .cat-tile__ic { background: linear-gradient(145deg, #A9C7B2, #6E8B76); box-shadow: 0 5px 13px rgba(110,139,118,0.34); }
+.cat-tile--all .cat-tile__ic { background: linear-gradient(145deg, #C8BDB2, #9A8E82); box-shadow: 0 5px 13px rgba(154,142,130,0.32); }
 
 /* 特集・ピックアップ */
 .feature-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
@@ -97,20 +96,23 @@
 .rank-user-card__follow { margin-top: 10px; font-size: var(--fs-sm); font-weight: 700; color: var(--ink); display: inline-flex; align-items: center; gap: 4px; }
 .rank-user-card__follow i { color: var(--rose); font-size: 14px; }
 
-/* 人気のユーザー：ジャンル別の選択タブ（ミニマム＝箱なし・アイコン円＋ラベルのみ） */
-.ugrp-tabs { display: flex; gap: 4px; margin-bottom: var(--sp-3); }
-.ugrp-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 4px; border: none; background: none; font-size: 12px; font-weight: 600; color: var(--gray); cursor: pointer; transition: color .15s; }
-.ugrp-tab__ic { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; transition: background .18s, color .18s, box-shadow .18s, transform .18s; }
-.ugrp-tab__ic i { font-size: 22px; }
+/* 人気のユーザー：ジャンル別の選択タブ（極ミニマム＝アイコン＋ラベル＋アクティブ下線のみ） */
+.ugrp-tabs { display: flex; gap: 4px; margin-bottom: var(--sp-4); }
+.ugrp-tab { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 4px 4px 10px; border: none; background: none; font-size: 12px; font-weight: 600; color: var(--gray); cursor: pointer; transition: color .18s; }
+.ugrp-tab__ic { display: grid; place-items: center; }
+.ugrp-tab__ic i { font-size: 23px; color: #C9BDB4; transition: color .18s; }
 .ugrp-tab__l { line-height: 1; }
-.ugrp-tab--beauty .ugrp-tab__ic { background: var(--rose-pale); color: var(--rose-deep); }
-.ugrp-tab--fashion .ugrp-tab__ic { background: var(--gold-pale); color: var(--gold); }
-.ugrp-tab--life .ugrp-tab__ic { background: #E9F1EC; color: #6E8B76; }
-.ugrp-tab.is-on { color: var(--ink); font-weight: 700; }
-.ugrp-tab.is-on .ugrp-tab__ic { color: #fff; transform: translateY(-1px); }
-.ugrp-tab--beauty.is-on .ugrp-tab__ic { background: var(--rose); box-shadow: 0 4px 11px rgba(217,110,143,0.42); }
-.ugrp-tab--fashion.is-on .ugrp-tab__ic { background: var(--gold); box-shadow: 0 4px 11px rgba(194,154,84,0.42); }
-.ugrp-tab--life.is-on .ugrp-tab__ic { background: #6E8B76; box-shadow: 0 4px 11px rgba(110,139,118,0.42); }
+.ugrp-tab.is-on { font-weight: 700; }
+.ugrp-tab.is-on::after { content: ""; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 22px; height: 2.5px; border-radius: 3px; }
+.ugrp-tab--beauty.is-on { color: var(--rose-deep); }
+.ugrp-tab--beauty.is-on .ugrp-tab__ic i { color: var(--rose); }
+.ugrp-tab--beauty.is-on::after { background: var(--rose); }
+.ugrp-tab--fashion.is-on { color: #A9812F; }
+.ugrp-tab--fashion.is-on .ugrp-tab__ic i { color: var(--gold); }
+.ugrp-tab--fashion.is-on::after { background: var(--gold); }
+.ugrp-tab--life.is-on { color: #566E5D; }
+.ugrp-tab--life.is-on .ugrp-tab__ic i { color: #6E8B76; }
+.ugrp-tab--life.is-on::after { background: #6E8B76; }
 .rank-badge { position: absolute; top: 8px; left: 8px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; background: var(--rose); box-shadow: 0 1px 5px rgba(43,35,32,0.28); }
 .rank-badge.rank-1 { background: var(--gold); }
 .rank-badge.rank-2 { background: #9AA0A6; }
