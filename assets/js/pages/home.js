@@ -27,6 +27,7 @@
         recruitSection() +
         UI.siteFooter();
       bindSearch();
+      bindCategoryTabs();
     });
   });
 
@@ -40,20 +41,35 @@
     );
   }
 
-  /* ② カテゴリから探す（3グループに分けて見出し付きで整理。全カテゴリを一覧・横スクロール無し） */
+  /* ② カテゴリから探す（グループをタブで切替＋1行スクロールでコンパクトに） */
+  var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
   function categorySection() {
-    var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
-    var blocks = GROUPS.map(function (gname) {
-      var g = GROUP_CLASS[gname] || "life";
-      var tiles = TAX.categories.filter(function (c) { return c.group === gname; }).map(function (c) {
-        return '<a class="cat-tile cat-tile--' + g + '" href="' + h("search/index.html?cat=" + c.slug) + '">' +
-          '<span class="cat-tile__ic">' + UI.icon(c.icon) + "</span>" +
-          '<span class="cat-tile__l">' + esc(c.label) + "</span></a>";
-      }).join("");
-      return '<div class="cat-group"><p class="cat-group__label">' + esc(gname) + "</p>" +
-        '<div class="cat-grid-g">' + tiles + "</div></div>";
+    var tabs = GROUPS.map(function (gname, i) {
+      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-g="' + esc(gname) + '">' + esc(gname) + "</button>";
     }).join("");
-    return '<div class="section"><p class="section__title">カテゴリから探す</p>' + blocks + "</div>";
+    return (
+      '<div class="section">' +
+      '<p class="section__title">カテゴリから探す</p>' +
+      '<div class="cat-tabs" id="cat-tabs">' + tabs + "</div>" +
+      '<div class="cat-scroll-g" id="cat-tiles">' + catTiles(GROUPS[0]) + "</div></div>"
+    );
+  }
+  function catTiles(gname) {
+    var g = GROUP_CLASS[gname] || "life";
+    return TAX.categories.filter(function (c) { return c.group === gname; }).map(function (c) {
+      return '<a class="cat-tile cat-tile--' + g + '" href="' + h("search/index.html?cat=" + c.slug) + '">' +
+        '<span class="cat-tile__ic">' + UI.icon(c.icon) + "</span>" +
+        '<span class="cat-tile__l">' + esc(c.label) + "</span></a>";
+    }).join("");
+  }
+  function bindCategoryTabs() {
+    var tabs = document.getElementById("cat-tabs");
+    if (!tabs) return;
+    tabs.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-g]"); if (!b) return;
+      Array.prototype.forEach.call(tabs.querySelectorAll(".cat-tab"), function (x) { x.classList.toggle("is-on", x === b); });
+      document.getElementById("cat-tiles").innerHTML = catTiles(b.dataset.g);
+    });
   }
 
   /* ③ 特集・ピックアップ（運営CMSで編集する想定のバナー棚） */
@@ -88,7 +104,7 @@
       '<div class="section">' +
       '<p class="section__title">人気のプラン' +
       '<a class="more" href="' + h("search/index.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
-      '<div class="plan-grid">' + plans.map(UI.planCard).join("") + "</div></div>"
+      '<div class="plan-scroll">' + plans.map(UI.planCard).join("") + "</div></div>"
     );
   }
 
@@ -99,7 +115,7 @@
       '<div class="section">' +
       '<p class="section__title">新着プラン' +
       '<a class="more" href="' + h("search/index.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
-      '<div class="plan-grid">' + plans.map(UI.planCard).join("") + "</div></div>"
+      '<div class="plan-scroll">' + plans.map(UI.planCard).join("") + "</div></div>"
     );
   }
 
