@@ -7,6 +7,11 @@
   var h = function (p) { return App.href(p); };
 
   var GROUP_CLASS = { "ビューティー": "beauty", "ファッション": "fashion", "ライフスタイル": "life" };
+  var GROUP_META = {
+    "ビューティー": { cls: "beauty", icon: "sparkles" },
+    "ファッション": { cls: "fashion", icon: "hanger" },
+    "ライフスタイル": { cls: "life", icon: "coffee" }
+  };
   var GROUPS = ["ビューティー", "ファッション", "ライフスタイル"];
   var usersSorted = [];   // 人気のユーザー（フォロワー数順・グループ切替用）
 
@@ -95,7 +100,10 @@
   function usersSection(creators) {
     usersSorted = creators.slice().sort(function (a, b) { return pvOf(b) - pvOf(a); });
     var tabs = GROUPS.map(function (g, i) {
-      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-ug="' + esc(g) + '">' + esc(g) + "</button>";
+      var m = GROUP_META[g] || {};
+      return '<button class="ugrp-tab ugrp-tab--' + m.cls + (i === 0 ? " is-on" : "") + '" data-ug="' + esc(g) + '">' +
+        '<span class="ugrp-tab__ic">' + UI.icon(m.icon) + "</span>" +
+        '<span class="ugrp-tab__l">' + esc(g) + "</span></button>";
     }).join("");
     return (
       '<div class="section">' +
@@ -103,7 +111,8 @@
       '<a class="more" href="' + h("users.html") + '">もっと見る ' + UI.icon("chevron-right") + "</a></p>" +
       '<p class="rank-group__label">総合</p>' +
       '<div class="rank-scroll">' + usersRow(usersSorted, "users.html") + "</div>" +
-      '<div class="cat-tabs" id="user-tabs" style="margin-top:18px;">' + tabs + "</div>" +
+      '<p class="rank-group__label" style="margin-top:20px;">ジャンル別</p>' +
+      '<div class="ugrp-tabs" id="user-tabs">' + tabs + "</div>" +
       '<div class="rank-scroll" id="user-group-row">' + groupUsersRow(GROUPS[0]) + "</div>" +
       "</div>"
     );
@@ -113,7 +122,7 @@
     if (!tabs) return;
     tabs.addEventListener("click", function (e) {
       var b = e.target.closest("[data-ug]"); if (!b) return;
-      Array.prototype.forEach.call(tabs.querySelectorAll(".cat-tab"), function (x) { x.classList.toggle("is-on", x === b); });
+      Array.prototype.forEach.call(tabs.querySelectorAll(".ugrp-tab"), function (x) { x.classList.toggle("is-on", x === b); });
       document.getElementById("user-group-row").innerHTML = groupUsersRow(b.dataset.ug);
     });
   }

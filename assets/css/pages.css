@@ -95,6 +95,24 @@
 .rank-user-card__type { font-size: var(--fs-xs); color: var(--gray); margin-top: 2px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rank-user-card__follow { margin-top: 10px; font-size: var(--fs-sm); font-weight: 700; color: var(--ink); display: inline-flex; align-items: center; gap: 4px; }
 .rank-user-card__follow i { color: var(--rose); font-size: 14px; }
+
+/* 人気のユーザー：ジャンル別の選択タブ（グループごとのアイコン＋テーマカラー） */
+.ugrp-tabs { display: flex; gap: 8px; margin-bottom: var(--sp-3); }
+.ugrp-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px 11px; border: 1.5px solid var(--line); border-radius: var(--r-lg); background: #fff; font-size: 12px; font-weight: 700; color: var(--gray); cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+.ugrp-tab__ic { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; transition: background .15s, color .15s; }
+.ugrp-tab__ic i { font-size: 21px; }
+.ugrp-tab__l { line-height: 1; }
+.ugrp-tab--beauty .ugrp-tab__ic { background: var(--rose-pale); color: var(--rose-deep); }
+.ugrp-tab--fashion .ugrp-tab__ic { background: var(--gold-pale); color: var(--gold); }
+.ugrp-tab--life .ugrp-tab__ic { background: #E9F1EC; color: #6E8B76; }
+.ugrp-tab.is-on { color: var(--ink); }
+.ugrp-tab.is-on .ugrp-tab__ic { color: #fff; }
+.ugrp-tab--beauty.is-on { border-color: var(--rose); background: var(--rose-pale); }
+.ugrp-tab--beauty.is-on .ugrp-tab__ic { background: var(--rose); box-shadow: 0 2px 7px rgba(217,110,143,0.4); }
+.ugrp-tab--fashion.is-on { border-color: var(--gold); background: var(--gold-pale); }
+.ugrp-tab--fashion.is-on .ugrp-tab__ic { background: var(--gold); box-shadow: 0 2px 7px rgba(194,154,84,0.4); }
+.ugrp-tab--life.is-on { border-color: #6E8B76; background: #E9F1EC; }
+.ugrp-tab--life.is-on .ugrp-tab__ic { background: #6E8B76; box-shadow: 0 2px 7px rgba(110,139,118,0.4); }
 .rank-badge { position: absolute; top: 8px; left: 8px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; background: var(--rose); box-shadow: 0 1px 5px rgba(43,35,32,0.28); }
 .rank-badge.rank-1 { background: var(--gold); }
 .rank-badge.rank-2 { background: #9AA0A6; }
