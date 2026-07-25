@@ -106,9 +106,29 @@
     pay.addEventListener("click", function () {
       var opts = {};
       if (p.format === "video" && picked) opts.slot = picked;
-      // 認証はこの瞬間だけ（未ログインなら購入と同時にアカウント作成＝SNS流入の摩擦を最小化）
-      var go = function () { api.purchase(p.id, opts).then(function (order) { done(p, order); }); };
-      if (!api.getSession()) { api.login().then(go); } else { go(); }
+      authAndPay(p, opts);
+    });
+  }
+
+  function purchaseNow(p, opts) {
+    api.purchase(p.id, opts).then(function (order) { done(p, order); });
+  }
+
+  /* 支払いの瞬間だけ認証（1タップ社会ログイン→アカウント自動作成→購入）。ログイン済みなら即購入 */
+  function authAndPay(p, opts) {
+    if (api.getSession()) { purchaseNow(p, opts); return; }
+    var ov = UI.openSheet(
+      '<p class="sheet__q">あと1ステップで完了</p>' +
+      '<p class="lead" style="margin-bottom:16px;">続けるサービスを選ぶだけ。アカウントが無い方も、その場で自動作成されます。</p>' +
+      '<button class="btn btn--line btn--block auth-p" data-p="line" style="margin-bottom:10px;">' + UI.icon("brand-line") + " LINEで続ける</button>" +
+      '<button class="btn btn--ink btn--block auth-p" data-p="apple" style="margin-bottom:10px;">' + UI.icon("brand-apple") + " Appleで続ける</button>" +
+      '<button class="btn btn--outline btn--block auth-p" data-p="google">' + UI.icon("brand-google") + " Googleで続ける</button>" +
+      '<p class="field-note center" style="margin-top:12px;">続けると<a href="' + h("terms.html") + '">利用規約</a>・<a href="' + h("privacy.html") + '">プライバシー</a>に同意したものとみなされます。</p>'
+    );
+    Array.prototype.forEach.call(ov.querySelectorAll(".auth-p"), function (b) {
+      b.addEventListener("click", function () {
+        api.login(b.dataset.p).then(function () { UI.closeSheet(); purchaseNow(p, opts); });
+      });
     });
   }
 
