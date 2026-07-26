@@ -239,7 +239,22 @@
 .report-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); color: var(--gray-l); margin-top: var(--sp-3); }
 
 /* ---------- S4 プラン詳細 ---------- */
-.plan-hero__cover { height: 180px; background: linear-gradient(135deg, var(--sand), var(--rose-pale)); display: flex; align-items: flex-start; padding: var(--sp-3); }
+.plan-hero__cover { position: relative; height: 180px; background: linear-gradient(135deg, var(--sand), var(--rose-pale)); display: flex; align-items: flex-start; padding: var(--sp-3); overflow: hidden; }
+.plan-hero__cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.plan-hero__cover .fmt { position: relative; z-index: 1; }
+
+/* プラン作成：サムネイル選択 */
+.thumb-pick { display: block; position: relative; width: 100%; aspect-ratio: 16 / 9; border: 1.5px dashed var(--line); border-radius: var(--r-lg); background: var(--cream); overflow: hidden; cursor: pointer; }
+.thumb-pick__empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--gray); font-size: var(--fs-sm); font-weight: 700; }
+.thumb-pick__empty i { font-size: 30px; color: var(--rose); }
+.thumb-pick__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.thumb-pick__change { position: absolute; right: 8px; bottom: 8px; z-index: 2; background: rgba(43,35,32,0.62); color: #fff; font-size: var(--fs-xs); font-weight: 700; padding: 4px 9px; border-radius: var(--r-pill); display: inline-flex; align-items: center; gap: 4px; }
+.thumb-pick__change[hidden] { display: none; }
+
+/* プラン作成：期間/長さの任意指定 */
+.dur-custom { display: flex; align-items: center; gap: 8px; }
+.dur-custom .field { flex: 1; }
+.dur-custom__u { font-size: var(--fs-base); font-weight: 700; color: var(--ink-soft); }
 .plan-detail { padding: var(--sp-4); }
 .plan-detail__title { font-size: var(--fs-2xl); font-weight: 700; line-height: 1.5; margin: var(--sp-2) 0; }
 .plan-detail__meta { display: flex; align-items: center; gap: var(--sp-3); font-size: var(--fs-base); color: var(--ink-soft); flex-wrap: wrap; }

@@ -24,7 +24,9 @@
   function view(p) {
     var c = p.creator || {};
     return (
-      '<div class="plan-hero__cover">' + UI.formatBadge(p.format) + "</div>" +
+      '<div class="plan-hero__cover">' +
+      (p.thumb ? '<img class="plan-hero__cover-img" src="' + esc(p.thumb) + '" alt="">' : "") +
+      UI.formatBadge(p.format) + "</div>" +
       '<div class="plan-detail">' +
       '<p class="plan-detail__title">' + esc(p.title) + "</p>" +
       '<div class="plan-detail__meta">' +
@@ -65,7 +67,7 @@
   function specList(p) {
     var rows = [];
     rows.push(row("形式", formatName(p.format)));
-    if (p.format === "chat") rows.push(row("相談期間", p.chatDays + "日間 チャットし放題"));
+    if (p.format === "chat") rows.push(row("相談期間", UI.chatDurationLabel(p.chatDays) + " チャットし放題"));
     if (p.format === "video") rows.push(row("ビデオ通話", p.minutes + "分（予約制）"));
     if (p.format === "monthly") {
       rows.push(row("チャット", p.chatIncluded ? "相談し放題" : "なし"));

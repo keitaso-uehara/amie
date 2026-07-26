@@ -575,6 +575,7 @@ window.api = (function () {
       if (data.format === "chat") plan.chatDays = data.chatDays || 7;
       if (data.format === "video") { plan.minutes = data.minutes || 60; plan.slots = data.slots || []; }
       if (data.format === "monthly") { plan.monthlyVideos = data.monthlyVideos || 0; plan.chatIncluded = true; }
+      if (data.thumb) plan.thumb = data.thumb;   // プランごとのサムネイル(dataURL)
       st.myPlans.push(plan);
       seller.planIds.push(id);
       st.mySeller = seller;

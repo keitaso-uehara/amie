@@ -11,7 +11,7 @@
   var createdPlan = null;
   var draft = {
     name: "", tagline: "", bio: "", categories: [], sns: {},
-    format: "chat", title: "", category: "", price: "", desc: "", slots: []
+    format: "chat", title: "", category: "", price: "", desc: "", slots: [], thumb: null
   };
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -152,6 +152,14 @@
 
       '<div class="form-row"><label class="field-label">カテゴリ</label><select class="field" id="o-cat">' + cats + "</select></div>" +
 
+      '<div class="form-row"><label class="field-label">サムネイル画像 <span class="muted">（任意・16:9推奨）</span></label>' +
+      '<label class="thumb-pick"><input type="file" accept="image/*" id="o-thumb-input" hidden>' +
+      '<div class="thumb-pick__empty" id="o-thumb-empty">' + UI.icon("photo-plus") + "<span>画像を選ぶ</span></div>" +
+      '<img class="thumb-pick__img" id="o-thumb-preview" alt="" hidden>' +
+      '<span class="thumb-pick__change" id="o-thumb-change" hidden>' + UI.icon("photo-edit") + " 変更</span>" +
+      "</label>" +
+      '<p class="field-note">プランの一覧・詳細に表示されます。未設定なら形式に合わせた背景になります。</p></div>' +
+
       '<div class="form-row" id="o-fmt-fields"></div>' +
 
       '<div class="form-row"><label class="field-label">料金（税込） <span class="req">必須</span></label>' +
@@ -172,15 +180,50 @@
   function seg(v, label) { return '<button type="button" class="seg__item' + (v === draft.format ? " is-on" : "") + '" data-fmt="' + v + '">' + esc(label) + "</button>"; }
   function fmtFields() {
     if (draft.format === "chat")
-      return '<label class="field-label">相談期間</label><select class="field" id="o-chatDays"><option value="3">3日間</option><option value="7" selected>7日間</option><option value="14">14日間</option></select>';
+      return '<label class="field-label">相談できる期間</label>' +
+        '<select class="field" id="o-chatDays"><option value="1">1日（24時間）</option><option value="2">2日間</option><option value="3" selected>3日間</option><option value="custom">任意で指定</option></select>' +
+        '<div id="o-chatDays-custom" hidden style="margin-top:8px;"><div class="dur-custom"><input class="field" id="o-chatDaysVal" type="number" inputmode="decimal" step="0.5" min="0.5" max="30" placeholder="例）5"><span class="dur-custom__u">日</span></div>' +
+        '<p class="field-note">半日（0.5日）〜1ヶ月（30日）まで、0.5日単位で指定できます。</p></div>';
     if (draft.format === "video")
-      return '<label class="field-label">ビデオ通話の長さ</label><select class="field" id="o-minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option></select>' +
+      return '<label class="field-label">ビデオ通話の長さ</label>' +
+        '<select class="field" id="o-minutes"><option value="30">30分</option><option value="60" selected>60分</option><option value="90">90分</option><option value="custom">任意で指定</option></select>' +
+        '<div id="o-minutes-custom" hidden style="margin-top:8px;"><div class="dur-custom"><input class="field" id="o-minutesVal" type="number" inputmode="numeric" step="5" min="5" max="180" placeholder="例）45"><span class="dur-custom__u">分</span></div>' +
+        '<p class="field-note">5分〜180分（3時間）まで、5分単位で指定できます。</p></div>' +
         '<label class="field-label" style="margin-top:14px;">予約可能な開始枠 <span class="muted">（15分刻み・任意）</span></label>' +
         '<div class="slot-add"><input class="field" type="datetime-local" id="o-slot-input" step="900"><button type="button" class="btn btn--outline btn--sm" id="o-slot-add">追加</button></div>' +
         '<button type="button" class="btn btn--ghost btn--sm" id="o-slot-week" style="margin-top:8px;">＋ この時間を毎週4週ぶん追加</button>' +
         '<div class="slot-chips" id="o-slot-chips"></div>' +
         '<p class="field-note">購入者はここで選んだ枠から予約します。空でもOK（購入後にメッセージで調整）。</p>';
     return '<label class="field-label">月のビデオ回数</label><select class="field" id="o-monthlyVideos"><option value="0">0回（チャットのみ）</option><option value="1">月1回</option><option value="2" selected>月2回</option><option value="4">月4回</option></select>';
+  }
+
+  /* 期間/長さの「任意で指定」トグル */
+  function wireOnbDuration() {
+    var cd = document.getElementById("o-chatDays");
+    if (cd) cd.addEventListener("change", function () { document.getElementById("o-chatDays-custom").hidden = this.value !== "custom"; });
+    var mn = document.getElementById("o-minutes");
+    if (mn) mn.addEventListener("change", function () { document.getElementById("o-minutes-custom").hidden = this.value !== "custom"; });
+  }
+  /* サムネイルのファイル選択→dataURLプレビュー(draftに保持) */
+  function wireOnbThumb() {
+    var input = document.getElementById("o-thumb-input");
+    if (!input) return;
+    input.addEventListener("change", function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      if (f.size > 3 * 1024 * 1024) { UI.toast("画像は3MBまでにしてください"); this.value = ""; return; }
+      var reader = new FileReader();
+      reader.onload = function (e) { draft.thumb = e.target.result; showOnbThumb(); };
+      reader.readAsDataURL(f);
+    });
+  }
+  function showOnbThumb() {
+    var img = document.getElementById("o-thumb-preview");
+    var empty = document.getElementById("o-thumb-empty");
+    var change = document.getElementById("o-thumb-change");
+    if (!img) return;
+    if (draft.thumb) { img.src = draft.thumb; img.hidden = false; empty.hidden = true; change.hidden = false; }
+    else { img.hidden = true; empty.hidden = false; change.hidden = true; }
   }
 
   /* 予約枠エディタ(ビデオ時のみDOMに存在) */
@@ -217,13 +260,13 @@
 
   function bind2() {
     document.getElementById("o-fmt-fields").innerHTML = fmtFields();
-    wireOnbSlots();
+    wireOnbSlots(); wireOnbDuration(); wireOnbThumb(); showOnbThumb();
     document.getElementById("o-fmt").addEventListener("click", function (e) {
       var b = e.target.closest("[data-fmt]"); if (!b) return;
       draft.format = b.dataset.fmt;
       document.querySelectorAll("#o-fmt .seg__item").forEach(function (x) { x.classList.toggle("is-on", x.dataset.fmt === draft.format); });
       document.getElementById("o-fmt-fields").innerHTML = fmtFields();
-      wireOnbSlots();
+      wireOnbSlots(); wireOnbDuration();
     });
     document.getElementById("o-back").addEventListener("click", function () { capture(); step = 1; render(); });
     document.getElementById("o-publish").addEventListener("click", function () {
@@ -234,9 +277,20 @@
       if (!price || price < MIN) return UI.toast("料金は" + App.money(MIN) + "以上で設定してください");
       if (price > CAP) return UI.toast("新規出品者の上限は" + App.money(CAP) + "です（解除は申請制）");
       var data = { title: draft.title, format: draft.format, price: price, desc: draft.desc, category: draft.category };
+      if (draft.thumb) data.thumb = draft.thumb;
       var f;
-      if (draft.format === "chat") { f = document.getElementById("o-chatDays"); data.chatDays = Number(f ? f.value : 7); }
-      if (draft.format === "video") { f = document.getElementById("o-minutes"); data.minutes = Number(f ? f.value : 60); data.slots = draft.slots.slice(); }
+      if (draft.format === "chat") {
+        f = document.getElementById("o-chatDays");
+        var days = f && f.value === "custom" ? Number(document.getElementById("o-chatDaysVal").value) : Number(f ? f.value : 3);
+        if (!days || days < 0.5 || days > 30) return UI.toast("相談期間は0.5〜30日で指定してください");
+        data.chatDays = days;
+      }
+      if (draft.format === "video") {
+        f = document.getElementById("o-minutes");
+        var mins = f && f.value === "custom" ? Number(document.getElementById("o-minutesVal").value) : Number(f ? f.value : 60);
+        if (!mins || mins < 5 || mins > 180) return UI.toast("ビデオの長さは5〜180分で指定してください");
+        data.minutes = mins; data.slots = draft.slots.slice();
+      }
       if (draft.format === "monthly") { f = document.getElementById("o-monthlyVideos"); data.monthlyVideos = Number(f ? f.value : 0); }
       api.createPlan(data).then(function (plan) { createdPlan = plan; step = 3; render(); })
         .catch(function () { UI.toast("公開に失敗しました。時間をおいて再度お試しください"); });

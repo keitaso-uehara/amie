@@ -23,9 +23,15 @@ window.UI = (function () {
   function priceLabel(plan) {
     return '<span class="price">' + money(plan.price) + (plan.format === "monthly" ? '<small> /月</small>' : "") + "</span>";
   }
+  /* チャット期間の表示(半日=12時間単位に対応)。1日未満は時間表記 */
+  function chatDurationLabel(days) {
+    if (days == null) return "";
+    if (days < 1) return Math.round(days * 24) + "時間";
+    return (Number.isInteger(days) ? days : days) + "日間";
+  }
   /* 形式ごとの補足(相談期間/時間/月の回数) */
   function formatDetail(plan) {
-    if (plan.format === "chat") return "相談し放題 " + plan.chatDays + "日間";
+    if (plan.format === "chat") return "相談し放題 " + chatDurationLabel(plan.chatDays);
     if (plan.format === "video") return "ビデオ通話 " + plan.minutes + "分";
     if (plan.format === "monthly") {
       var v = plan.monthlyVideos > 0 ? "・月" + plan.monthlyVideos + "回ビデオ" : "";
@@ -140,7 +146,9 @@ window.UI = (function () {
     var c = p.creator || {};
     return (
       '<a class="plan-card" href="' + h("plans/show.html?id=" + p.id) + '">' +
-      '<div class="plan-card__cover">' + formatBadge(p.format) + "</div>" +
+      '<div class="plan-card__cover">' +
+      (p.thumb ? '<img class="plan-card__cover-img" src="' + esc(p.thumb) + '" alt="">' : "") +
+      formatBadge(p.format) + "</div>" +
       '<div class="plan-card__body">' +
       '<p class="plan-card__title">' + esc(p.title) + "</p>" +
       '<p class="plan-card__creator">' + avatar(c, "avatar--xs") + esc(c.name) + (c.verified ? verified() : "") + "</p>" +
@@ -271,7 +279,7 @@ window.UI = (function () {
   return {
     icon: icon, topbar: topbar, tabbar: tabbar,
     formatBadge: formatBadge, priceLabel: priceLabel, formatDetail: formatDetail,
-    verified: verified, stars: stars, snsFollowers: snsFollowers, avatar: avatar,
+    verified: verified, stars: stars, snsFollowers: snsFollowers, avatar: avatar, chatDurationLabel: chatDurationLabel,
     creatorCard: creatorCard, creatorMini: creatorMini, planCard: planCard,
     reviewItem: reviewItem, statTile: statTile, typeBadge: typeBadge,
     openSheet: openSheet, closeSheet: closeSheet, toast: toast, empty: empty,
