@@ -42,8 +42,7 @@
 
       '<p class="field-label">相談したいこと' + (approval ? "（承認の判断に使われます）" : "（最初のひとこととして届きます）") + "</p>" +
       '<textarea class="field field--area" id="intake" placeholder="例）ブルベ夏だと思うのですが、本当に似合う色みを知りたいです。"></textarea>' +
-      '<input class="field" id="intake-note" placeholder="はじめのごあいさつ・ひとこと（任意）" style="margin-top:8px;">' +
-      '<p class="field-note" style="margin-bottom:16px;">' + (approval ? "リクエストと一緒に出品者へ届きます。" : "購入と同時に、メッセージの最初のひとこととして届きます。") + "</p>" +
+      '<p class="field-note" style="margin-top:8px;margin-bottom:16px;">' + (approval ? "リクエストと一緒に出品者へ届きます。" : "購入と同時に、メッセージの最初のひとこととして届きます。") + "</p>" +
 
       '<p class="field-label">お支払い方法</p>' +
       '<div class="pay-method">' +
@@ -122,8 +121,7 @@
       if (p.format === "video" && picked) opts.slot = picked;
       var ref = App.qs("ref"); if (ref) opts.ref = ref;
       var topic = (document.getElementById("intake") || {}).value || "";
-      var note = (document.getElementById("intake-note") || {}).value || "";
-      opts.intake = { topic: topic.trim(), note: note.trim() };
+      opts.intake = { topic: topic.trim() };
       var approval = !!(p.creator && p.creator.approvalRequired);
       authAndProceed(p, opts, approval ? "request" : "pay");
     });
