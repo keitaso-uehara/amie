@@ -22,6 +22,7 @@
 
   function form(p) {
     var c = p.creator || {};
+    var approval = !!(p.creator && p.creator.approvalRequired);
     return (
       '<div class="section">' +
       '<div class="checkout-creator">' + UI.avatar(c, "avatar--lg") +
@@ -35,7 +36,14 @@
       '<div class="order-card__row total"><span>お支払い' + (p.format === "monthly" ? "（初月）" : "") + "</span><span>" + App.money(p.price) + "</span></div>" +
       "</div>" +
 
+      (approval ? '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("shield-check") + " " + esc(c.name) + "さんは、リクエストを確認してから相談をお受けします。いまはお支払いは発生しません。</div>" : "") +
+
       (p.format === "video" ? slotBlock(p) : "") +
+
+      '<p class="field-label">相談したいこと' + (approval ? "（承認の判断に使われます）" : "（最初のひとこととして届きます）") + "</p>" +
+      '<textarea class="field field--area" id="intake" placeholder="例）ブルベ夏だと思うのですが、本当に似合う色みを知りたいです。"></textarea>' +
+      '<input class="field" id="intake-note" placeholder="はじめのごあいさつ・ひとこと（任意）" style="margin-top:8px;">' +
+      '<p class="field-note" style="margin-bottom:16px;">' + (approval ? "リクエストと一緒に出品者へ届きます。" : "購入と同時に、メッセージの最初のひとこととして届きます。") + "</p>" +
 
       '<p class="field-label">お支払い方法</p>' +
       '<div class="pay-method">' +
@@ -52,9 +60,11 @@
       '<span><a href="' + h("terms.html") + '">利用規約</a>・<a href="' + h("tokusho.html") + '">特商法表記</a>' +
       (p.format === "monthly" ? "、および毎月の自動更新" : "") + "に同意します。</span></label>" +
 
-      '<button class="btn btn--rose btn--block" id="pay" disabled>' + App.money(p.price) + " を支払う</button>" +
-      '<p class="field-note center" style="margin-top:10px;">お支払いは取引完了までELLMIEがお預かりします（エスクロー）。</p>' +
-      '<p class="field-note center">はじめての方も、購入と同時にアカウントが作成されます。事前の会員登録は不要です。</p>' +
+      '<button class="btn btn--rose btn--block" id="pay" disabled>' + (approval ? "リクエストを送る" : App.money(p.price) + " を支払う") + "</button>" +
+      (approval
+        ? '<p class="field-note center" style="margin-top:10px;">いまは請求されません。' + esc(c.name) + "さんが承認したら、ワンタップでお支払いが完了します。</p>"
+        : '<p class="field-note center" style="margin-top:10px;">お支払いは取引完了までELLMIEがお預かりします（エスクロー）。</p>') +
+      '<p class="field-note center">はじめての方も、' + (approval ? "リクエスト" : "購入") + "と同時にアカウントが作成されます。事前の会員登録は不要です。</p>" +
       "</div>"
     );
   }
@@ -86,12 +96,15 @@
     var pay = document.getElementById("pay");
     var slots = document.getElementById("slots");
 
+    var intakeEl = document.getElementById("intake");
     function refresh() {
       var needSlot = p.format === "video" && avail(p).length > 0;
-      var ok = agree.checked && (!needSlot || picked !== null);
+      var hasIntake = intakeEl && intakeEl.value.trim().length > 0;
+      var ok = agree.checked && hasIntake && (!needSlot || picked !== null);
       pay.disabled = !ok;
     }
     agree.addEventListener("change", refresh);
+    if (intakeEl) intakeEl.addEventListener("input", refresh);
 
     if (slots) {
       slots.addEventListener("click", function (e) {
@@ -108,17 +121,22 @@
       var opts = {};
       if (p.format === "video" && picked) opts.slot = picked;
       var ref = App.qs("ref"); if (ref) opts.ref = ref;
-      authAndPay(p, opts);
+      var topic = (document.getElementById("intake") || {}).value || "";
+      var note = (document.getElementById("intake-note") || {}).value || "";
+      opts.intake = { topic: topic.trim(), note: note.trim() };
+      var approval = !!(p.creator && p.creator.approvalRequired);
+      authAndProceed(p, opts, approval ? "request" : "pay");
     });
   }
 
-  function purchaseNow(p, opts) {
-    api.purchase(p.id, opts).then(function (order) { done(p, order); });
+  function proceed(p, opts, mode) {
+    if (mode === "request") api.requestBooking(p.id, opts).then(function (order) { afterRequest(p, order); });
+    else api.purchase(p.id, opts).then(function (order) { done(p, order); });
   }
 
-  /* 支払いの瞬間だけ認証（1タップ社会ログイン→アカウント自動作成→購入）。ログイン済みなら即購入 */
-  function authAndPay(p, opts) {
-    if (api.getSession()) { purchaseNow(p, opts); return; }
+  /* 支払い/リクエストの瞬間だけ認証（1タップ社会ログイン→アカウント自動作成→実行）。ログイン済みなら即実行 */
+  function authAndProceed(p, opts, mode) {
+    if (api.getSession()) { proceed(p, opts, mode); return; }
     var ov = UI.openSheet(
       '<p class="sheet__q">あと1ステップで完了</p>' +
       '<p class="lead" style="margin-bottom:16px;">続けるサービスを選ぶだけ。アカウントが無い方も、その場で自動作成されます。</p>' +
@@ -129,8 +147,44 @@
     );
     Array.prototype.forEach.call(ov.querySelectorAll(".auth-p"), function (b) {
       b.addEventListener("click", function () {
-        api.login(b.dataset.p).then(function () { UI.closeSheet(); purchaseNow(p, opts); });
+        api.login(b.dataset.p).then(function () { UI.closeSheet(); proceed(p, opts, mode); });
       });
+    });
+  }
+
+  /* 承認制：リクエスト送信後。シード出品者は自動承認済み→確定画面、c_meは承認待ち画面 */
+  function afterRequest(p, order) {
+    if (order.status === "approved") return doneApproved(p, order);
+    return doneRequested(p, order);
+  }
+
+  function doneRequested(p, order) {
+    var c = p.creator || {};
+    document.getElementById("main").innerHTML =
+      '<div class="done">' +
+      '<div class="done__icon done__icon--wait">' + UI.icon("clock-hour-4") + "</div>" +
+      '<p class="done__title">リクエストを送信しました</p>' +
+      '<p class="lead">' + esc(c.name) + "さんが内容を確認して承認すると、通知が届きます。承認後にワンタップでお支払いが完了します。<br>まだ請求は発生していません。</p>" +
+      '<div class="stack" style="margin-top:24px;">' +
+      '<a class="btn btn--rose btn--block" href="' + h("messages/index.html?order=" + order.id) + '">メッセージを開く</a>' +
+      '<a class="btn btn--ghost btn--block" href="' + h("me/index.html") + '">マイページへ</a>' +
+      "</div></div>";
+  }
+
+  function doneApproved(p, order) {
+    var c = p.creator || {};
+    document.getElementById("main").innerHTML =
+      '<div class="done">' +
+      '<div class="done__icon">' + UI.icon("circle-check-filled") + "</div>" +
+      '<p class="done__title">' + esc(c.name) + "さんが承認しました！</p>" +
+      '<p class="lead">最後にお支払いを確定すると、相談がスタートします。' +
+      (p.format === "video" && order.slot ? "<br>予約：" + esc(App.slotLabel(order.slot)) : "") + "</p>" +
+      '<div class="order-card" style="margin-top:16px;"><div class="order-card__row total"><span>お支払い</span><span>' + App.money(order.price) + "</span></div></div>" +
+      '<button class="btn btn--rose btn--block" id="confirm-pay" style="margin-top:16px;">' + App.money(order.price) + " を支払って確定</button>" +
+      "</div>";
+    document.getElementById("confirm-pay").addEventListener("click", function () {
+      this.disabled = true;
+      api.confirmRequest(order.id).then(function (o) { done(p, o || order); });
     });
   }
 

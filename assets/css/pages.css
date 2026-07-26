@@ -291,6 +291,7 @@
 /* 完了画面 */
 .done { text-align: center; padding: var(--sp-7) var(--sp-4); }
 .done__icon { font-size: 64px; color: var(--rose); }
+.done__icon--wait { color: var(--gold); }
 .done__title { font-size: var(--fs-2xl); font-weight: 700; margin: var(--sp-3) 0 var(--sp-2); }
 
 /* ---------- S6 メッセージ ---------- */
@@ -518,3 +519,16 @@
 .admin-row__acts { display: flex; gap: 6px; flex-shrink: 0; }
 .admin-flag { display: inline-block; padding: 1px 7px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 700; background: var(--gold-pale); color: var(--gold); }
 .admin-ok { display: inline-block; padding: 1px 7px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 700; background: #E7EFEC; color: #3F7A68; }
+.admin-row__acts { flex-wrap: wrap; justify-content: flex-end; }
+.admin-row__intake { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: 6px; display: flex; align-items: center; gap: 5px; background: var(--cream); border-radius: var(--r-md); padding: 5px 9px; }
+.admin-row__intake i { color: var(--rose); font-size: 13px; flex-shrink: 0; }
+
+/* リクエスト承認制のトグル（出品者ダッシュボード） */
+.approval-toggle { display: flex; align-items: center; gap: 14px; }
+.approval-toggle__text { flex: 1; min-width: 0; }
+.approval-toggle__t { font-size: var(--fs-base); font-weight: 700; color: var(--ink); }
+.approval-toggle__d { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: 3px; line-height: 1.55; }
+.switch { flex: 0 0 auto; width: 50px; height: 30px; border-radius: 999px; border: none; background: var(--sand); position: relative; cursor: pointer; transition: background .18s; }
+.switch.is-on { background: var(--rose); }
+.switch__dot { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(43,35,32,0.28); transition: transform .18s; }
+.switch.is-on .switch__dot { transform: translateX(20px); }

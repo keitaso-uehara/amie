@@ -23,6 +23,7 @@
         main.innerHTML =
           head(mySeller, bal) +
           cards(mySeller, bal, sellerOrders) +
+          approvalSection(mySeller) +
           payoutSection(bal, payouts) +
           bookingsSection(sellerOrders) +
           limitBox() +
@@ -75,13 +76,30 @@
 
   function cards(seller, bal, orders) {
     var active = orders.filter(function (o) { return o.status === "progress" || o.status === "active"; }).length;
+    var pendingReq = orders.filter(function (o) { return o.status === "requested"; }).length;
     var rating = seller.stats && seller.stats.rating ? seller.stats.rating : "—";
     return (
       '<div class="dash-cards">' +
       card(App.money(bal.pending), "確定待ち(エスクロー)") +
       card(String(active), "取引中") +
-      card("0", "未返信メッセージ") +
+      card(String(pendingReq), "承認待ち") +
       card(rating, "平均評価") +
+      "</div>"
+    );
+  }
+
+  /* リクエスト承認制のON/OFF（買い手を選べる安全弁。ビデオ相談の安心確保） */
+  function approvalSection(seller) {
+    var on = !!seller.approvalRequired;
+    return (
+      '<div class="section hr">' +
+      '<p class="section__title">相談の受け方</p>' +
+      '<div class="approval-toggle">' +
+      '<div class="approval-toggle__text"><p class="approval-toggle__t">リクエスト承認制</p>' +
+      '<p class="approval-toggle__d">ONにすると購入は「リクエスト」になり、あなたが承認した人だけがお支払いに進みます。相手を選べるので、ビデオ相談の安心につながります。</p></div>' +
+      '<button class="switch' + (on ? " is-on" : "") + '" id="approval-switch" type="button" role="switch" aria-checked="' + on + '"><span class="switch__dot"></span></button>' +
+      "</div>" +
+      '<p class="field-note">' + (on ? "現在：承認した人だけが購入できます。" : "現在：誰でもすぐに購入できます（即予約）。") + "</p>" +
       "</div>"
     );
   }
@@ -114,21 +132,29 @@
   /* 予約・取引の管理（出品者として。中止＝全額返金／完了） */
   function bookingsSection(orders) {
     if (!orders.length) return "";
-    var LABEL = { progress: "進行中", active: "契約中", completed: "完了", canceled: "返金済み" };
+    var LABEL = { requested: "承認待ち", approved: "確定待ち", progress: "進行中", active: "契約中", completed: "完了", canceled: "返金済み", declined: "見送り" };
     return (
       '<div class="section hr">' +
       '<p class="section__title">予約・取引の管理</p>' +
       orders.map(function (o) {
         var acts = "";
+        if (o.status === "requested") {
+          acts += '<button class="btn btn--sm btn--rose" data-approve="' + esc(o.id) + '">承認する</button>';
+          acts += '<button class="btn btn--sm btn--ghost" data-decline="' + esc(o.id) + '">お断り</button>';
+        }
         if (o.format === "video" && o.status === "progress" && o.slot) acts += '<button class="btn btn--sm btn--outline" data-sresched="' + esc(o.id) + '">日時を変更</button>';
         if (o.format === "video" && o.status === "progress" && o.slot) acts += '<button class="btn btn--sm btn--outline" data-ics="' + esc(o.id) + '">カレンダー</button>';
         if (o.status === "progress" && o.format !== "monthly") acts += '<button class="btn btn--sm btn--outline" data-scomplete="' + esc(o.id) + '">完了にする</button>';
         if (o.status === "progress" || o.status === "active") acts += '<button class="btn btn--sm btn--ghost" data-cancel="' + esc(o.id) + '">中止（全額返金）</button>';
+        var intake = (o.intake && o.intake.topic)
+          ? '<p class="admin-row__intake">' + UI.icon("message-2") + " " + esc(o.intake.topic) + (o.intake.note ? "（" + esc(o.intake.note) + "）" : "") + "</p>"
+          : "";
         return (
           '<div class="admin-row"><div class="admin-row__body">' +
           '<p class="admin-row__title">' + esc(o.plan ? o.plan.title : "(プラン)") + "</p>" +
           '<p class="admin-row__meta">' + esc(LABEL[o.status] || o.status) +
-          (o.slot ? " ・" + esc(App.slotLabel(o.slot)) : "") + " ・" + App.money(o.price) + "</p></div>" +
+          (o.slot ? " ・" + esc(App.slotLabel(o.slot)) : "") + " ・" + App.money(o.price) + "</p>" +
+          intake + "</div>" +
           '<div class="admin-row__acts">' + acts + "</div></div>"
         );
       }).join("") +
@@ -205,6 +231,22 @@
     if (csv) csv.addEventListener("click", downloadCSV);
     var pdf = document.getElementById("pdf");
     if (pdf) pdf.addEventListener("click", openStatementPDF);
+    var asw = document.getElementById("approval-switch");
+    if (asw) asw.addEventListener("click", function () {
+      var next = !asw.classList.contains("is-on");
+      api.setMySeller({ approvalRequired: next }).then(function () {
+        UI.toast(next ? "リクエスト承認制をONにしました" : "即予約（承認なし）に戻しました");
+        setTimeout(function () { location.reload(); }, 500);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-approve]"), function (b) {
+      b.addEventListener("click", function () {
+        api.approveRequest(b.dataset.approve).then(function () { UI.toast("承認しました。購入者がお支払いに進めます"); setTimeout(function () { location.reload(); }, 700); });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-decline]"), function (b) {
+      b.addEventListener("click", function () { declineBooking(b.dataset.decline); });
+    });
     Array.prototype.forEach.call(document.querySelectorAll("[data-cancel]"), function (b) {
       b.addEventListener("click", function () { sellerCancel(b.dataset.cancel); });
     });
@@ -316,6 +358,20 @@
       if (!w) { UI.toast("ポップアップを許可してください"); return; }
       w.document.write(html); w.document.close();
     });
+  }
+
+  /* リクエストのお断り（未請求のまま終了・定型のおわびを送信） */
+  function declineBooking(orderId) {
+    var ov = UI.openSheet(
+      '<p class="sheet__q">このリクエストをお断りしますか？</p>' +
+      '<p class="lead" style="margin-bottom:18px;">購入者へ定型のおわびが送られ、請求は発生しません。断った理由は相手には表示されません。</p>' +
+      '<button class="btn btn--rose btn--block" id="dc-go">お断りする（未請求）</button>' +
+      '<button class="btn btn--ghost btn--block" id="dc-no" style="margin-top:10px;">やめる</button>'
+    );
+    ov.querySelector("#dc-go").addEventListener("click", function () {
+      api.declineRequest(orderId, {}).then(function () { UI.closeSheet(); UI.toast("お断りしました（未請求）"); setTimeout(function () { location.reload(); }, 700); });
+    });
+    ov.querySelector("#dc-no").addEventListener("click", UI.closeSheet);
   }
 
   /* 出品者都合の中止（全額返金） */

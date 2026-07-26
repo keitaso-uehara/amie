@@ -5,7 +5,7 @@
   var esc = function (s) { return App.esc(s); };
   var h = function (p) { return App.href(p); };
 
-  var STATUS = { progress: "進行中", active: "契約中", completed: "完了", canceled: "終了" };
+  var STATUS = { requested: "承認待ち", approved: "承認済み", progress: "進行中", active: "契約中", completed: "完了", canceled: "終了", declined: "見送り" };
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
@@ -113,6 +113,8 @@
   function actionBar(o) {
     var btns = [];
     var hasSlots = o.plan && o.plan.slots && o.plan.slots.length;
+    if (o.status === "approved")
+      btns.push('<button class="btn btn--sm btn--rose" id="confirm">' + UI.icon("credit-card") + " " + App.money(o.price) + " を支払って確定</button>");
     if (o.format === "video" && o.status === "progress")
       btns.push('<a class="btn btn--sm btn--rose" href="' + h("call/index.html?order=" + o.id) + '">' + UI.icon("video") + " ビデオに入室</a>");
     if (o.format === "video" && o.status === "progress" && o.slot && !o.rescheduled && hasSlots)
@@ -131,6 +133,11 @@
     return '<div class="room__actions">' + btns.join("") + "</div>";
   }
   function bindActions(o) {
+    var cf = document.getElementById("confirm");
+    if (cf) cf.addEventListener("click", function () {
+      cf.disabled = true;
+      api.confirmRequest(o.id).then(function () { UI.toast("お支払いが完了しました"); setTimeout(function () { location.reload(); }, 500); });
+    });
     var c = document.getElementById("complete");
     if (c) c.addEventListener("click", function () {
       api.completeOrder(o.id).then(function () { UI.toast("取引を完了しました"); setTimeout(function () { location.reload(); }, 500); });

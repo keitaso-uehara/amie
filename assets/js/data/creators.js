@@ -22,6 +22,7 @@ window.DB.creators = [
     categories: ["fashion", "personalcolor"], concerns: ["date", "office"],
     sns: { instagram: 892000, tiktok: 210000, youtube: 0 },
     stats: { sales: 96, rating: 5.0, repeat: 54 },
+    approvalRequired: true,   // 著名出品者の例：リクエスト承認制(買い手を選べる)
     planIds: ["p004", "p005"]
   },
   {
