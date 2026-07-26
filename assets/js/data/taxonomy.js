@@ -20,7 +20,6 @@ window.TAX = {
     { slug: "goods",        label: "靴・バッグ・小物",       group: "ファッション",   icon: "shopping-bag" },
     { slug: "accessory",    label: "アクセサリー・ジュエリー", group: "ファッション",   icon: "diamond" },
     { slug: "brand",        label: "ブランド・古着",         group: "ファッション",   icon: "shirt" },
-    { slug: "closet",       label: "クローゼット整理・断捨離", group: "ファッション",   icon: "archive" },
     { slug: "fashion_other",label: "その他",              group: "ファッション",   icon: "dots" },
     /* ライフスタイル */
     { slug: "diet",         label: "ダイエット・ボディメイク", group: "ライフスタイル", icon: "run" },
