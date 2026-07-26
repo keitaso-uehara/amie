@@ -12,15 +12,16 @@ window.TAX = {
     { slug: "eyelash",      label: "まつ毛・眉",          group: "ビューティー",   icon: "eye" },
     { slug: "cosme",        label: "コスメ・デパコス選び",   group: "ビューティー",   icon: "color-swatch" },
     { slug: "fragrance",    label: "香り・フレグランス",     group: "ビューティー",   icon: "perfume" },
+    { slug: "beauty_other", label: "その他",              group: "ビューティー",   icon: "dots" },
     /* ファッション */
     { slug: "fashion",      label: "コーデ・着回し",        group: "ファッション",   icon: "hanger" },
     { slug: "personalcolor",label: "パーソナルカラー・骨格", group: "ファッション",   icon: "palette" },
     { slug: "bodystyle",    label: "体型カバー・スタイルアップ", group: "ファッション", icon: "ruler-2" },
     { slug: "goods",        label: "靴・バッグ・小物",       group: "ファッション",   icon: "shopping-bag" },
     { slug: "accessory",    label: "アクセサリー・ジュエリー", group: "ファッション",   icon: "diamond" },
-    { slug: "petitprice",   label: "プチプラ・高見え",       group: "ファッション",   icon: "tag" },
     { slug: "brand",        label: "ブランド・古着",         group: "ファッション",   icon: "shirt" },
     { slug: "closet",       label: "クローゼット整理・断捨離", group: "ファッション",   icon: "archive" },
+    { slug: "fashion_other",label: "その他",              group: "ファッション",   icon: "dots" },
     /* ライフスタイル */
     { slug: "diet",         label: "ダイエット・ボディメイク", group: "ライフスタイル", icon: "run" },
     { slug: "cooking",      label: "料理・レシピ",         group: "ライフスタイル", icon: "tools-kitchen-2" },
@@ -28,7 +29,8 @@ window.TAX = {
     { slug: "travel",       label: "旅行",               group: "ライフスタイル", icon: "plane" },
     { slug: "love",         label: "恋愛・婚活",          group: "ライフスタイル", icon: "heart" },
     { slug: "kids",         label: "子育て",             group: "ライフスタイル", icon: "baby-carriage" },
-    { slug: "career",       label: "キャリア・働き方",      group: "ライフスタイル", icon: "briefcase" }
+    { slug: "career",       label: "キャリア・働き方",      group: "ライフスタイル", icon: "briefcase" },
+    { slug: "lifestyle_other", label: "その他",           group: "ライフスタイル", icon: "dots" }
   ],
   concerns: [
     { slug: "akanuke",   label: "垢抜け" },
