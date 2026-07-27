@@ -86,6 +86,11 @@
 .appr-badge i { font-size: 11px; }
 .avatar--img { padding: 0; overflow: hidden; }
 .avatar--img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.online-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #35C759; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(53,199,89,0.35); }
+.creator-mini__ava { position: relative; display: inline-block; }
+.creator-mini__ava .online-dot { position: absolute; right: 2px; bottom: 10px; }
+.online-chip { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: var(--fs-xs); font-weight: 700; color: #2E9E4F; background: #E7F6EC; padding: 2px 8px; border-radius: var(--r-pill); vertical-align: middle; }
+.online-chip .online-dot { width: 7px; height: 7px; border: none; box-shadow: none; }
 .plan-card__body { padding: var(--sp-3); }
 .plan-card__title { font-size: var(--fs-base); font-weight: 700; line-height: 1.5; margin-bottom: 6px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -104,6 +109,10 @@
 .review__head b { font-weight: 700; }
 .review__date { color: var(--gray-l); margin-left: auto; font-size: var(--fs-xs); }
 .review__body { font-size: var(--fs-base); color: var(--ink-soft); line-height: 1.7; }
+.review__reply { display: flex; gap: 6px; margin-top: 8px; padding: 8px 12px; background: var(--cream); border-radius: var(--r-md); }
+.review__reply i { color: var(--rose); font-size: 15px; flex-shrink: 0; }
+.review__reply b { font-size: var(--fs-xs); color: var(--rose-deep); }
+.review__reply p { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.6; margin-top: 2px; }
 
 /* ---------- 数値タイル ---------- */
 .stat-row { display: flex; gap: var(--sp-2); }

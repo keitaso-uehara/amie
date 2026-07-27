@@ -44,11 +44,23 @@ window.api = (function () {
   }
   /* 実売上として扱う状態(受取・明細・成果の対象)。requested/approved/declinedは未確定なので除外 */
   function isRealSale(status) { return status === "progress" || status === "active" || status === "completed"; }
+  /* 検索・一覧に出してよいプランか。受付停止＝paused、出品者の休暇モード＝mySeller.away を除外 */
+  function isDiscoverable(p) {
+    if (!p || p.paused) return false;
+    var st = getState();
+    if (st.mySeller && st.mySeller.away && p.creatorId === st.mySeller.id) return false;
+    return true;
+  }
 
-  /* シード＋ローカル投稿レビューを結合して返す */
+  /* シード＋ローカル投稿レビューを結合して返す（出品者返信も添える） */
   function reviewsFor(planId) {
     var st = getState();
-    return (window.DB.reviews[planId] || []).concat(st.myReviews[planId] || []);
+    var replies = st.reviewReplies || {};
+    var list = (window.DB.reviews[planId] || []).concat(st.myReviews[planId] || []);
+    return list.map(function (r, i) {
+      var key = planId + "#" + i;
+      return Object.assign({}, r, { _key: key, reply: replies[key] || null });
+    });
   }
   /* 全プラン(シード＋自分で作成したプラン) */
   function allPlans() {
@@ -79,7 +91,7 @@ window.api = (function () {
     var plans = allPlans();
     c.plans = (c.planIds || []).map(function (pid) {
       return plans.filter(function (p) { return p.id === pid; })[0];
-    }).filter(function (p) { return p && !p.paused; });   // 公開プロフィールは受付停止中を隠す
+    }).filter(isDiscoverable);   // 公開プロフィールは受付停止中・休暇中を隠す
     var reviews = [];
     (c.planIds || []).forEach(function (pid) {
       reviewsFor(pid).forEach(function (r) { reviews.push(Object.assign({ planId: pid }, r)); });
@@ -165,18 +177,18 @@ window.api = (function () {
             .some(function (t) { return t.toLowerCase().indexOf(q) !== -1; });
         });
       }
-      return Promise.resolve(list.filter(function (p) { return !p.paused; }));   // 受付停止中は一覧に出さない
+      return Promise.resolve(list.filter(isDiscoverable));   // 受付停止中・休暇中は一覧に出さない
     },
     getPlan: function (id) {
       return Promise.resolve(hydratePlan(allPlans().filter(function (p) { return p.id === id; })[0] || null));
     },
     getNewPlans: function (n) {
-      var list = allPlans().map(hydratePlan).filter(function (p) { return !p.paused; }).slice().reverse();
+      var list = allPlans().map(hydratePlan).filter(isDiscoverable).slice().reverse();
       return Promise.resolve(n ? list.slice(0, n) : list);
     },
     /* 人気順(販売数→評価)。TOPの「人気のプラン」棚に使う */
     getPopularPlans: function (n) {
-      var list = allPlans().map(hydratePlan).filter(function (p) { return !p.paused; }).sort(function (a, b) {
+      var list = allPlans().map(hydratePlan).filter(isDiscoverable).sort(function (a, b) {
         return (b.stats.sales || 0) - (a.stats.sales || 0) || (b.stats.rating || 0) - (a.stats.rating || 0);
       });
       return Promise.resolve(n ? list.slice(0, n) : list);
@@ -250,6 +262,7 @@ window.api = (function () {
       var plan = allPlans().filter(function (p) { return p.id === planId; })[0];
       if (!plan) return Promise.reject(new Error("plan not found"));
       if (plan.paused) return Promise.reject(new Error("plan paused"));
+      if (st.mySeller && st.mySeller.away && plan.creatorId === st.mySeller.id) return Promise.reject(new Error("seller away"));
       var order = {
         id: "o_" + st.seq,
         planId: planId,
@@ -303,6 +316,7 @@ window.api = (function () {
       var plan = allPlans().filter(function (p) { return p.id === planId; })[0];
       if (!plan) return Promise.reject(new Error("plan not found"));
       if (plan.paused) return Promise.reject(new Error("plan paused"));
+      if (st.mySeller && st.mySeller.away && plan.creatorId === st.mySeller.id) return Promise.reject(new Error("seller away"));
       var order = {
         id: "o_" + st.seq, planId: planId, creatorId: plan.creatorId, format: plan.format,
         price: plan.price, status: "requested", slot: opts.slot || null, minutes: plan.minutes || null,
@@ -569,9 +583,28 @@ window.api = (function () {
       opts = opts || {};
       var st = getState();
       st.threads[orderId] = st.threads[orderId] || [];
-      st.threads[orderId].push({ from: "me", body: body, image: !!opts.image, read: true, timeLabel: "たった今" });
+      // 出品者として送る場合は from:"creator"（受信箱の双方向スレッド）
+      st.threads[orderId].push({ from: opts.as === "seller" ? "creator" : "me", body: body, image: !!opts.image, read: true, timeLabel: "たった今" });
       setState(st);
       return Promise.resolve(clone(st.threads[orderId]));
+    },
+    /* レビューへの出品者返信（key = "<planId>#<index>"） */
+    replyToReview: function (key, text) {
+      var st = getState();
+      st.reviewReplies = st.reviewReplies || {};
+      st.reviewReplies[key] = text;
+      setState(st);
+      return Promise.resolve();
+    },
+    /* 出品者としての取引スレッド一覧（受信箱） */
+    getSellerThreads: function () {
+      return this.getSellerOrders().then(function (orders) {
+        var st = getState();
+        return orders.map(function (o) {
+          var msgs = st.threads[o.id] || [];
+          return { order: o, last: msgs[msgs.length - 1] || null };
+        });
+      });
     },
 
     /* ---------- プラン作成・編集(S12) ---------- */
@@ -692,6 +725,8 @@ window.api = (function () {
       if (data.sns) seller.sns = data.sns;
       if (data.avatar !== undefined) seller.avatar = data.avatar;   // プロフィール画像(dataURL)
       if (data.approvalRequired !== undefined) seller.approvalRequired = !!data.approvalRequired;   // リクエスト承認制のON/OFF
+      if (data.away !== undefined) seller.away = !!data.away;         // 休暇/不在モード(全プランを受付停止扱い)
+      if (data.online !== undefined) seller.online = !!data.online;   // 今すぐ相談OK(オンライン状態)
       st.mySeller = seller;
       setState(st);
       return Promise.resolve(hydrateCreator(seller));

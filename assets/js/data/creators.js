@@ -11,7 +11,7 @@ window.DB.creators = [
     bio: "元美容部員のメイクインフルエンサー。「地味顔さんの垢抜け」をテーマに毎日発信しています。あなたの顔立ちに本当に似合うを一緒に見つけましょう。",
     categories: ["makeup", "skincare"], concerns: ["akanuke", "buruberu"],
     sns: { instagram: 128000, tiktok: 342000, youtube: 56000 },
-    stats: { sales: 214, rating: 4.9, repeat: 68 },
+    stats: { sales: 214, rating: 4.9, repeat: 68 }, online: true,
     planIds: ["p001", "p002", "p003"]
   },
   {
@@ -42,7 +42,7 @@ window.DB.creators = [
     bio: "サロン級のセルフネイルを教えています。不器用さんこそ変われる。あなたの指先の悩み、チャットで気軽に相談してください。",
     categories: ["nail"], concerns: ["akanuke"],
     sns: { instagram: 76000, tiktok: 145000, youtube: 0 },
-    stats: { sales: 158, rating: 4.9, repeat: 60 },
+    stats: { sales: 158, rating: 4.9, repeat: 60 }, online: true,
     planIds: ["p008"]
   },
   {
@@ -92,7 +92,7 @@ window.DB.creators = [
     bio: "婚活・恋愛の発信をしています。うまくいかないのはあなたのせいじゃない。プロフィールの言葉選びからデートの振る舞いまで、二人三脚で。",
     categories: ["love"], concerns: ["date"],
     sns: { instagram: 214000, tiktok: 118000, youtube: 0 },
-    stats: { sales: 201, rating: 4.9, repeat: 63 },
+    stats: { sales: 201, rating: 4.9, repeat: 63 }, online: true,
     planIds: ["p014", "p015"]
   },
   {

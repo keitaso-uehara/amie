@@ -30,7 +30,7 @@
       '<div class="creator-hero__cover"></div>' +
       '<div class="creator-hero__body">' +
       UI.avatar(c, "avatar--lg creator-hero__avatar") +
-      '<p class="creator-hero__name">' + esc(c.name) + (c.verified ? UI.verified() : "") + "</p>" +
+      '<p class="creator-hero__name">' + esc(c.name) + (c.verified ? UI.verified() : "") + UI.onlineChip(c) + "</p>" +
       '<p class="creator-hero__handle">@' + esc(c.handle) + "</p>" +
       '<div class="creator-hero__row">' + UI.typeBadge(c.type) + '<span class="muted">' + esc(c.typeLabel) + "</span></div>" +
       UI.snsFollowers(c) +

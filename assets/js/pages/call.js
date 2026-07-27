@@ -42,9 +42,15 @@
       '<div class="call__self" id="self">あなた</div>' +
       '<div class="call__timer" id="timer">--:--</div>' +
       "</div>" +
+      '<div class="call__chat" id="call-chat" hidden>' +
+      '<div class="call__chat-head">チャット<button type="button" id="chat-close" aria-label="閉じる">' + UI.icon("x") + "</button></div>" +
+      '<div class="call__chat-body" id="call-chat-body"></div>' +
+      '<form class="call__chat-form" id="call-chat-form"><input id="call-chat-input" placeholder="メッセージ（相手に届きます）" autocomplete="off"><button type="submit" aria-label="送信">' + UI.icon("send") + "</button></form>" +
+      "</div>" +
       '<div class="call__bar">' +
       ctrl("mic", muted ? "microphone-off" : "microphone", "ミュート", muted) +
       ctrl("cam", camOff ? "video-off" : "video", "カメラ", camOff) +
+      '<button class="call__ctrl" id="chat" aria-label="チャット">' + UI.icon("message-2") + "</button>" +
       '<button class="call__end" id="end" aria-label="退出">' + UI.icon("phone-off") + "</button>" +
       "</div></div>"
     );
@@ -74,6 +80,28 @@
       this.innerHTML = UI.icon(camOff ? "video-off" : "video");
     });
     document.getElementById("end").addEventListener("click", leaveConfirm);
+    var chatPanel = document.getElementById("call-chat");
+    document.getElementById("chat").addEventListener("click", function () { chatPanel.hidden = false; loadChat(); });
+    document.getElementById("chat-close").addEventListener("click", function () { chatPanel.hidden = true; });
+    document.getElementById("call-chat-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var inp = document.getElementById("call-chat-input");
+      var text = inp.value.trim(); if (!text) return;
+      var ng = api.checkMessage(text);
+      if (ng) { UI.toast("「" + ng + "」は送れません"); return; }
+      api.sendMessage(order.id, text).then(function () { inp.value = ""; loadChat(); });
+    });
+  }
+
+  function loadChat() {
+    api.getThread(order.id).then(function (msgs) {
+      var box = document.getElementById("call-chat-body"); if (!box) return;
+      box.innerHTML = msgs.map(function (m) {
+        var mine = m.from === "me";
+        return '<div class="call__msg call__msg--' + (mine ? "me" : "them") + '">' + (m.image ? "📷 画像" : esc(m.body)) + "</div>";
+      }).join("");
+      box.scrollTop = box.scrollHeight;
+    });
   }
 
   /* 退出（取引は完了しない・再入室できる） */

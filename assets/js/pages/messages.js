@@ -17,31 +17,36 @@
     if (orderId) room(orderId); else list();
   });
 
-  /* ---------- 一覧 ---------- */
+  /* ---------- 一覧（購入した相談＝buyer / 受けた相談＝seller の2区分） ---------- */
   function list() {
     var main = document.getElementById("main");
-    api.getThreads().then(function (threads) {
-      if (!threads.length) {
+    Promise.all([api.getThreads(), api.getSellerThreads()]).then(function (res) {
+      var buyer = res[0] || [], seller = res[1] || [];
+      if (!buyer.length && !seller.length) {
         main.innerHTML = '<div class="page-head"><h1>メッセージ</h1></div>' +
           UI.empty("まだ取引がありません。気になる人に相談してみましょう。", "さがす", "search/index.html");
         return;
       }
-      main.innerHTML =
-        '<div class="page-head"><h1>メッセージ</h1></div>' +
-        '<div class="thread-list">' + threads.map(row).join("") + "</div>";
+      var html = '<div class="page-head"><h1>メッセージ</h1></div>';
+      if (buyer.length) html += '<p class="thread-group">相談中（あなたが購入）</p><div class="thread-list">' + buyer.map(function (t) { return row(t, "buyer"); }).join("") + "</div>";
+      if (seller.length) html += '<p class="thread-group">受けた相談（あなたが出品）</p><div class="thread-list">' + seller.map(function (t) { return row(t, "seller"); }).join("") + "</div>";
+      main.innerHTML = html;
     });
   }
 
-  function row(t) {
+  function row(t, role) {
     var o = t.order, c = o.creator || {};
+    var isSeller = role === "seller";
+    var counter = isSeller ? { name: "購入者" } : c;
     var last = t.last ? t.last.body : "メッセージを始めましょう";
+    var href = "messages/index.html?order=" + o.id + (isSeller ? "&role=seller" : "");
     return (
-      '<a class="thread-row" href="' + h("messages/index.html?order=" + o.id) + '">' +
-      UI.avatar(c, "avatar--lg") +
+      '<a class="thread-row" href="' + h(href) + '">' +
+      UI.avatar(counter, "avatar--lg") +
       '<div class="thread-row__body">' +
-      '<p class="thread-row__name">' + esc(c.name) + (c.verified ? UI.verified() : "") +
+      '<p class="thread-row__name">' + esc(counter.name) + (!isSeller && c.verified ? UI.verified() : "") +
       ' <span class="thread-row__status">' + esc(STATUS[o.status] || "") + "</span></p>" +
-      '<p class="thread-row__last">' + esc(last) + "</p>" +
+      '<p class="thread-row__last">' + (isSeller ? esc(o.plan ? o.plan.title : "") + " ・ " : "") + esc(last) + "</p>" +
       "</div>" + UI.icon("chevron-right") + "</a>"
     );
   }
@@ -53,17 +58,20 @@
     if (tab) tab.remove();  // ルームは全画面
     main.style.paddingBottom = "0";
 
-    api.getOrder(orderId).then(function (o) {
+    Promise.all([api.getOrder(orderId), api.getMySeller()]).then(function (rr) {
+      var o = rr[0], mySeller = rr[1];
       if (!o) { main.innerHTML = UI.empty("取引が見つかりませんでした。", "メッセージ一覧へ", "messages/index.html"); return; }
+      var iAmSeller = App.qs("role") === "seller" && mySeller && o.creatorId === mySeller.id;
       var c = o.creator || {};
+      var counterName = iAmSeller ? "購入者" : c.name;
       api.getThread(orderId).then(function (msgs) {
         main.innerHTML =
           '<div class="room">' +
-          '<div class="room__info"><span>' + esc(c.name) + " / " + esc(o.plan ? o.plan.title : "") + "</span>" +
+          '<div class="room__info"><span>' + esc(counterName) + " / " + esc(o.plan ? o.plan.title : "") + (iAmSeller ? "（販売）" : "") + "</span>" +
           '<span class="badge">' + esc(STATUS[o.status] || "") +
           (o.slot ? " ・" + esc(App.slotLabel(o.slot)) : "") + "</span></div>" +
-          actionBar(o) +
-          '<div class="room__body" id="room-body">' + msgs.map(bubble).join("") + "</div>" +
+          actionBar(o, iAmSeller) +
+          '<div class="room__body" id="room-body">' + msgs.map(function (m) { return bubble(m, iAmSeller); }).join("") + "</div>" +
           '<form class="room__form" id="room-form">' +
           '<button class="room__attach" type="button" id="attach" aria-label="画像を添付">' + UI.icon("photo") + "</button>" +
           '<input id="room-input" type="text" placeholder="メッセージを入力" autocomplete="off">' +
@@ -72,8 +80,9 @@
         var body = document.getElementById("room-body");
         body.scrollTop = body.scrollHeight;
 
+        var sendOpts = iAmSeller ? { as: "seller" } : {};
         function append(all) {
-          body.insertAdjacentHTML("beforeend", bubble(all[all.length - 1]));
+          body.insertAdjacentHTML("beforeend", bubble(all[all.length - 1], iAmSeller));
           body.scrollTop = body.scrollHeight;
         }
         document.getElementById("room-form").addEventListener("submit", function (e) {
@@ -86,48 +95,49 @@
             UI.toast("「" + ng + "」は送れません。外部誘導・連絡先交換は禁止です");
             return;
           }
-          api.sendMessage(orderId, text).then(function (all) { input.value = ""; append(all); });
+          api.sendMessage(orderId, text, sendOpts).then(function (all) { input.value = ""; append(all); });
         });
         document.getElementById("attach").addEventListener("click", function () {
           // 実装ではファイル選択→Storageアップロード。モックは画像メッセージを追加。
-          api.sendMessage(orderId, "写真を送信しました", { image: true }).then(append);
+          api.sendMessage(orderId, "写真を送信しました", Object.assign({ image: true }, sendOpts)).then(append);
         });
-        bindActions(o);
+        bindActions(o, iAmSeller);
       });
     });
   }
 
-  function bubble(m) {
-    var me = m.from === "me";
+  function bubble(m, iAmSeller) {
+    // 出品者視点では creator=自分(右) / me=相手(左)。購入者視点は逆。
+    var mine = iAmSeller ? (m.from === "creator") : (m.from === "me");
     var content = m.image
       ? '<div class="msg__img">' + UI.icon("photo") + " 画像</div>"
       : esc(m.body);
     return (
-      '<div class="msg msg--' + (me ? "me" : "them") + '">' +
+      '<div class="msg msg--' + (mine ? "me" : "them") + '">' +
       '<div class="msg__bubble">' + content + "</div>" +
-      '<p class="msg__time">' + esc(m.timeLabel) + (me && m.read ? " ・既読" : "") + "</p></div>"
+      '<p class="msg__time">' + esc(m.timeLabel) + (mine && m.read ? " ・既読" : "") + "</p></div>"
     );
   }
 
-  /* ビデオ取引の入室 / 取引完了 / レビュー導線 */
-  function actionBar(o) {
+  /* ビデオ取引の入室 / 取引完了 / レビュー導線。出品者視点は購入者専用アクションを出さない */
+  function actionBar(o, iAmSeller) {
     var btns = [];
     var hasSlots = o.plan && o.plan.slots && o.plan.slots.length;
-    if (o.status === "approved")
+    if (!iAmSeller && o.status === "approved")
       btns.push('<button class="btn btn--sm btn--rose" id="confirm">' + UI.icon("credit-card") + " " + App.money(o.price) + " を支払って確定</button>");
     if (o.format === "video" && o.status === "progress")
       btns.push('<a class="btn btn--sm btn--rose" href="' + h("call/index.html?order=" + o.id) + '">' + UI.icon("video") + " ビデオに入室</a>");
-    if (o.format === "video" && o.status === "progress" && o.slot && !o.rescheduled && hasSlots)
+    if (!iAmSeller && o.format === "video" && o.status === "progress" && o.slot && !o.rescheduled && hasSlots)
       btns.push('<button class="btn btn--sm btn--outline" id="reschedule">' + UI.icon("calendar-event") + " 日時を変更</button>");
     if (o.format === "video" && o.status === "progress" && o.slot)
       btns.push('<button class="btn btn--sm btn--outline" id="ics">' + UI.icon("calendar-plus") + " カレンダーに追加</button>");
-    if (o.status === "progress" || o.status === "active")
+    if (!iAmSeller && (o.status === "progress" || o.status === "active"))
       btns.push('<button class="btn btn--sm btn--outline" id="tip">' + UI.icon("coin") + " 追加で支払う</button>");
     if (o.status === "progress" && o.format !== "monthly")
       btns.push('<button class="btn btn--sm btn--ghost" id="complete">取引を完了する</button>');
-    if (o.status === "progress" || o.status === "active")
+    if (!iAmSeller && (o.status === "progress" || o.status === "active"))
       btns.push('<button class="btn btn--sm btn--ghost" id="cancel">キャンセル・返金</button>');
-    if (o.reviewable)
+    if (!iAmSeller && o.reviewable)
       btns.push('<a class="btn btn--sm btn--outline" href="' + h("review/index.html?order=" + o.id) + '">レビューを書く</a>');
     if (!btns.length) return "";
     return '<div class="room__actions">' + btns.join("") + "</div>";

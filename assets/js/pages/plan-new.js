@@ -57,8 +57,34 @@
       '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("info-circle") +
       " 公開後は運営が内容を確認します（事後パトロール）。禁止事項は" + '<a href="' + h("guide.html") + '" style="color:var(--rose-deep);">出品者ガイド</a>をご確認ください。</div>' +
 
+      '<button class="btn btn--outline btn--block" id="preview" style="margin-bottom:10px;">' + UI.icon("eye") + " プレビュー</button>" +
       '<button class="btn btn--rose btn--block" id="submit">' + (editing ? "更新する" : "公開する") + "</button>" +
       "</div>"
+    );
+  }
+
+  /* 現在のフォーム内容からプラン相当のオブジェクトを組む（プレビュー用） */
+  function buildDraft() {
+    var p = {
+      id: editing ? editing.id : "preview",
+      title: document.getElementById("title").value.trim() || "（プラン名）",
+      format: format, price: Number(document.getElementById("price").value) || 0,
+      category: document.getElementById("cat").value, desc: document.getElementById("desc").value.trim(),
+      thumb: thumb, creator: { name: "あなた" }, stats: { rating: 0, sales: 0 }
+    };
+    if (format === "chat") { var cs = document.getElementById("chatDays").value; p.chatDays = cs === "custom" ? Number(document.getElementById("chatDaysVal").value) : Number(cs); }
+    if (format === "video") { var vs = document.getElementById("minutes").value; p.minutes = vs === "custom" ? Number(document.getElementById("minutesVal").value) : Number(vs); }
+    if (format === "monthly") { p.monthlyVideos = Number(document.getElementById("monthlyVideos").value); p.chatIncluded = true; }
+    return p;
+  }
+  function openPreview() {
+    var p = buildDraft();
+    UI.openSheet(
+      '<p class="sheet__q">プレビュー</p>' +
+      '<p class="lead" style="margin-bottom:12px;">購入者にはこのように表示されます。</p>' +
+      '<div style="max-width:220px;margin:0 auto 16px;pointer-events:none;">' + UI.planCard(p) + "</div>" +
+      '<p class="field-label">' + esc(p.title) + " ／ " + App.money(p.price) + "</p>" +
+      '<p class="lead" style="white-space:pre-wrap;">' + esc(p.desc || "（内容説明はまだありません）") + "</p>"
     );
   }
   function seg(v, label) { return '<button type="button" class="seg__item' + (v === format ? " is-on" : "") + '" data-fmt="' + v + '">' + esc(label) + "</button>"; }
@@ -190,6 +216,7 @@
       wireSlots(); wireDuration();
     });
 
+    document.getElementById("preview").addEventListener("click", openPreview);
     document.getElementById("submit").addEventListener("click", function () {
       var title = document.getElementById("title").value.trim();
       var price = Number(document.getElementById("price").value);

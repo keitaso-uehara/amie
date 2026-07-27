@@ -68,6 +68,8 @@
     var review = o.reviewable
       ? '<a class="order-item__review" href="' + h("review/index.html?order=" + o.id) + '">' + UI.icon("star") + " レビューを書く</a>"
       : "";
+    var paid = ["progress", "active", "completed"].indexOf(o.status) !== -1;
+    var receipt = paid ? '<button class="order-item__review" data-receipt="' + esc(o.id) + '">' + UI.icon("receipt") + " 領収書</button>" : "";
     var refunded = o.refund ? " ・返金 " + App.money(o.refund.amount) : "";
     return (
       '<div class="order-item">' +
@@ -75,7 +77,8 @@
       UI.avatar(c, "avatar--lg") +
       '<div class="order-item__body"><p class="order-item__title">' + esc(o.plan ? o.plan.title : "") + "</p>" +
       '<p class="order-item__meta">' + esc(c.name) + (o.slot ? " ・" + esc(App.slotLabel(o.slot)) : "") + esc(refunded) + "</p></div>" +
-      '<span class="status-chip ' + s[1] + '">' + s[0] + "</span></a>" + review +
+      '<span class="status-chip ' + s[1] + '">' + s[0] + "</span></a>" +
+      '<div class="order-item__acts">' + review + receipt + "</div>" +
       "</div>"
     );
   }
@@ -130,6 +133,12 @@
   function bind(me, orders) {
     var edit = document.getElementById("edit");
     if (edit) edit.addEventListener("click", function () { openEdit(me); });
+    document.querySelectorAll("[data-receipt]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var o = orders.filter(function (x) { return x.id === b.dataset.receipt; })[0];
+        if (o) openReceipt(o, me);
+      });
+    });
     document.querySelectorAll("[data-action]").forEach(function (b) {
       b.addEventListener("click", function () {
         var a = b.dataset.action;
@@ -141,6 +150,28 @@
         }
       });
     });
+  }
+
+  /* 領収書（印刷ダイアログ→PDF保存）。宛名は購入者名 */
+  function openReceipt(o, me) {
+    var addons = (o.addons || []).reduce(function (s, a) { return s + (a.amount || 0); }, 0);
+    var total = (o.price || 0) + addons;
+    var title = o.plan ? o.plan.title : "相談";
+    var html =
+      '<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>領収書 - ELLMIE</title>' +
+      "<style>body{font-family:'Hiragino Sans',sans-serif;padding:40px;color:#2b2320;max-width:600px;margin:0 auto;}h1{font-size:22px;letter-spacing:2px;}.row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0;}.amt{font-size:26px;font-weight:700;margin:18px 0;}.note{margin-top:24px;font-size:12px;color:#888;}</style></head><body>" +
+      "<h1>領収書</h1>" +
+      "<p>" + esc(me.name || "") + " 様</p>" +
+      '<p class="amt">' + App.money(total) + "（税込）</p>" +
+      '<div class="row"><span>但し</span><span>「' + esc(title) + "」相談料として</span></div>" +
+      '<div class="row"><span>取引ID</span><span>' + esc(o.id) + "</span></div>" +
+      '<div class="row"><span>発行日</span><span>' + esc(o.createdLabel || "") + "</span></div>" +
+      '<div class="row"><span>発行</span><span>ELLMIE（株式会社Blue）</span></div>' +
+      '<p class="note">※ 本領収書はELLMIEが決済代行として発行するものです。</p>' +
+      "<scr" + "ipt>window.onload=function(){window.print();}</scr" + "ipt></body></html>";
+    var w = window.open("", "_blank");
+    if (!w) { UI.toast("ポップアップを許可してください"); return; }
+    w.document.write(html); w.document.close();
   }
 
   function openEdit(me) {

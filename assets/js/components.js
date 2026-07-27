@@ -77,6 +77,9 @@ window.UI = (function () {
   }
   /* 承認制(リクエスト制)の目印 */
   function approvalBadge() { return '<span class="appr-badge">' + icon("shield-check") + " 承認制</span>"; }
+  /* オンライン中（今すぐ相談OK）の目印 */
+  function onlineDot(c) { return c && c.online ? '<span class="online-dot" title="今すぐ相談OK"></span>' : ""; }
+  function onlineChip(c) { return c && c.online ? '<span class="online-chip"><span class="online-dot"></span>オンライン</span>' : ""; }
 
   /* ---------- トップバー ---------- */
   function topbar() {
@@ -125,7 +128,7 @@ window.UI = (function () {
       '<span class="creator-card__cover"></span>' +
       avatar(c, "avatar--lg creator-card__avatar") +
       '<div class="creator-card__body">' +
-      '<p class="creator-card__name">' + esc(c.name) + (c.verified ? verified() : "") + "</p>" +
+      '<p class="creator-card__name">' + esc(c.name) + (c.verified ? verified() : "") + onlineChip(c) + "</p>" +
       '<p class="creator-card__type">' + esc(c.typeLabel) + "</p>" +
       snsFollowers(c, { compact: true }) +
       '<p class="creator-card__tagline">' + esc(c.tagline) + "</p>" +
@@ -137,7 +140,7 @@ window.UI = (function () {
   function creatorMini(c) {
     return (
       '<a class="creator-mini" href="' + h("creators/show.html?id=" + c.id) + '">' +
-      avatar(c, "avatar--lg") +
+      '<span class="creator-mini__ava">' + avatar(c, "avatar--lg") + onlineDot(c) + "</span>" +
       '<p class="creator-mini__name">' + esc(c.name) + (c.verified ? verified() : "") + "</p>" +
       '<p class="creator-mini__type">' + esc(c.typeLabel) + "</p>" +
       snsFollowers(c, { compact: true }) +
@@ -172,6 +175,7 @@ window.UI = (function () {
       '<div class="review__head"><span class="avatar avatar--xs">' + esc(u.name.charAt(0)) + "</span>" +
       "<b>" + esc(u.name) + "</b>" + stars(r.rating) + '<span class="review__date">' + esc(r.date) + "</span></div>" +
       '<p class="review__body">' + esc(r.body) + "</p>" +
+      (r.reply ? '<div class="review__reply">' + icon("corner-down-right") + "<div><b>出品者より</b><p>" + esc(r.reply) + "</p></div></div>" : "") +
       "</div>"
     );
   }
@@ -284,7 +288,7 @@ window.UI = (function () {
   return {
     icon: icon, topbar: topbar, tabbar: tabbar,
     formatBadge: formatBadge, priceLabel: priceLabel, formatDetail: formatDetail,
-    verified: verified, stars: stars, snsFollowers: snsFollowers, avatar: avatar, chatDurationLabel: chatDurationLabel, approvalBadge: approvalBadge,
+    verified: verified, stars: stars, snsFollowers: snsFollowers, avatar: avatar, chatDurationLabel: chatDurationLabel, approvalBadge: approvalBadge, onlineChip: onlineChip, onlineDot: onlineDot,
     creatorCard: creatorCard, creatorMini: creatorMini, planCard: planCard,
     reviewItem: reviewItem, statTile: statTile, typeBadge: typeBadge,
     openSheet: openSheet, closeSheet: closeSheet, toast: toast, empty: empty,

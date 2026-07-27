@@ -46,9 +46,24 @@
 
   function render() {
     var main = document.getElementById("main");
-    main.innerHTML = head() + '<div id="results"></div>';
+    main.innerHTML = head() + searchEntry() + '<div id="results"></div>';
     bindHead();
     load();
+  }
+
+  /* 検索の入口：クエリ・絞り込みが無いときに人気ワード＋履歴を出す */
+  var POPULAR = ["垢抜け", "ブルベ", "骨格診断", "眉メイク", "一重", "デート服", "くせ毛", "参観日コーデ"];
+  function getHist() { try { return JSON.parse(localStorage.getItem("amie:searchHist") || "[]"); } catch (e) { return []; } }
+  function pushHist(q) { if (!q) return; var hh = getHist().filter(function (x) { return x !== q; }); hh.unshift(q); localStorage.setItem("amie:searchHist", JSON.stringify(hh.slice(0, 6))); }
+  function searchEntry() {
+    if (state.q || state.cat || state.concern || state.type) return "";
+    var hist = getHist();
+    return '<div class="section search-entry">' +
+      '<p class="field-label">人気のキーワード</p><div class="filter-row">' +
+      POPULAR.map(function (w) { return '<button class="filter-chip" data-q="' + esc(w) + '">' + esc(w) + "</button>"; }).join("") + "</div>" +
+      (hist.length ? '<p class="field-label" style="margin-top:16px;">最近の検索</p><div class="filter-row">' +
+        hist.map(function (w) { return '<button class="filter-chip" data-q="' + esc(w) + '">' + UI.icon("history") + " " + esc(w) + "</button>"; }).join("") + "</div>" : "") +
+      "</div>";
   }
 
   function head() {
@@ -130,7 +145,11 @@
     document.getElementById("s-form").addEventListener("submit", function (e) {
       e.preventDefault();
       state.q = this.q.value.trim();
-      load();
+      pushHist(state.q);
+      render();
+    });
+    document.querySelectorAll("[data-q]").forEach(function (b) {
+      b.addEventListener("click", function () { state.q = b.dataset.q; pushHist(state.q); render(); });
     });
     document.querySelectorAll(".tab").forEach(function (t) {
       t.addEventListener("click", function () { state.tab = t.dataset.tab; render(); });

@@ -27,6 +27,7 @@
           approvalSection(mySeller) +
           payoutSection(bal, payouts, bank) +
           bookingsSection(sellerOrders) +
+          subscribersSection(sellerOrders) +
           myPlansSection(myPlans, mySeller) +
           reviewsReceivedSection(reviews) +
           limitBox() +
@@ -78,7 +79,11 @@
           '<div class="review__head">' + UI.stars(r.rating) +
           '<span class="review__date">' + esc(r.date) + "</span></div>" +
           '<p class="review__body">' + esc(r.body) + "</p>" +
-          '<p class="field-note" style="margin-top:2px;">' + esc(r.planTitle || "") + "</p></div>";
+          '<p class="field-note" style="margin-top:2px;">' + esc(r.planTitle || "") + "</p>" +
+          (r.reply
+            ? '<div class="review__reply">' + UI.icon("corner-down-right") + "<div><b>あなたの返信</b><p>" + esc(r.reply) + "</p></div></div>"
+            : '<button class="btn btn--sm btn--outline" data-reply="' + esc(r._key) + '" style="margin-top:8px;">' + UI.icon("message-2") + " 返信する</button>") +
+          "</div>";
       }).join("") + "</div>"
     );
   }
@@ -119,19 +124,40 @@
     );
   }
 
-  /* リクエスト承認制のON/OFF（買い手を選べる安全弁。ビデオ相談の安心確保） */
+  /* 相談の受け方（オンライン状態・承認制・休暇モード） */
   function approvalSection(seller) {
-    var on = !!seller.approvalRequired;
     return (
       '<div class="section hr">' +
       '<p class="section__title">相談の受け方</p>' +
-      '<div class="approval-toggle">' +
-      '<div class="approval-toggle__text"><p class="approval-toggle__t">リクエスト承認制</p>' +
-      '<p class="approval-toggle__d">ONにすると購入は「リクエスト」になり、あなたが承認した人だけがお支払いに進みます。相手を選べるので、ビデオ相談の安心につながります。</p></div>' +
-      '<button class="switch' + (on ? " is-on" : "") + '" id="approval-switch" type="button" role="switch" aria-checked="' + on + '"><span class="switch__dot"></span></button>' +
-      "</div>" +
-      '<p class="field-note">' + (on ? "現在：承認した人だけが購入できます。" : "現在：誰でもすぐに購入できます（即予約）。") + "</p>" +
+      toggleRow("online", !!seller.online, "今すぐ相談OK（オンライン表示）", "ONにすると一覧やプロフィールに「オンライン中」と表示され、今すぐ相談したい人に見つかりやすくなります。") +
+      toggleRow("approval", !!seller.approvalRequired, "リクエスト承認制", "ONにすると購入は「リクエスト」になり、あなたが承認した人だけがお支払いに進みます。相手を選べます。") +
+      toggleRow("away", !!seller.away, "休暇モード（受付を一時停止）", "ONにすると全プランの受付を止め、検索・一覧から外れます。長期不在のときに。") +
       "</div>"
+    );
+  }
+  function toggleRow(key, on, title, desc) {
+    return (
+      '<div class="approval-toggle" style="margin-bottom:14px;">' +
+      '<div class="approval-toggle__text"><p class="approval-toggle__t">' + esc(title) + "</p>" +
+      '<p class="approval-toggle__d">' + esc(desc) + "</p></div>" +
+      '<button class="switch' + (on ? " is-on" : "") + '" data-setting="' + key + '" type="button" role="switch" aria-checked="' + on + '"><span class="switch__dot"></span></button>' +
+      "</div>"
+    );
+  }
+
+  /* 月額プランの契約者管理（契約中の一覧・件数） */
+  function subscribersSection(orders) {
+    var subs = orders.filter(function (o) { return o.format === "monthly" && o.status === "active"; });
+    if (!subs.length) return "";
+    return (
+      '<div class="section hr">' +
+      '<p class="section__title">月額の契約者 <span class="muted" style="font-size:13px;font-weight:500;">' + subs.length + "人</span></p>" +
+      subs.map(function (o) {
+        return '<div class="admin-row"><div class="admin-row__body">' +
+          '<p class="admin-row__title">' + esc(o.plan ? o.plan.title : "(プラン)") + "</p>" +
+          '<p class="admin-row__meta">契約中 ・' + App.money(o.price) + "/月 ・" + esc(o.createdLabel || "") + "</p></div>" +
+          '<div class="admin-row__acts"><a class="btn btn--sm btn--outline" href="' + h("messages/index.html?order=" + o.id + "&role=seller") + '">' + UI.icon("message-2") + "</a></div></div>";
+      }).join("") + "</div>"
     );
   }
   function card(v, l) { return '<div class="dash-card"><p class="dash-card__v">' + esc(String(v)) + '</p><p class="dash-card__l">' + esc(l) + "</p></div>"; }
@@ -269,13 +295,15 @@
     if (csv) csv.addEventListener("click", downloadCSV);
     var pdf = document.getElementById("pdf");
     if (pdf) pdf.addEventListener("click", openStatementPDF);
-    var asw = document.getElementById("approval-switch");
-    if (asw) asw.addEventListener("click", function () {
-      var next = !asw.classList.contains("is-on");
-      api.setMySeller({ approvalRequired: next }).then(function () {
-        UI.toast(next ? "リクエスト承認制をONにしました" : "即予約（承認なし）に戻しました");
-        setTimeout(function () { location.reload(); }, 500);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-setting]"), function (b) {
+      b.addEventListener("click", function () {
+        var key = b.dataset.setting, next = !b.classList.contains("is-on");
+        var patch = {}; patch[key === "approval" ? "approvalRequired" : key] = next;
+        api.setMySeller(patch).then(function () { UI.toast("設定を更新しました"); setTimeout(function () { location.reload(); }, 400); });
       });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-reply]"), function (b) {
+      b.addEventListener("click", function () { openReplySheet(b.dataset.reply); });
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-approve]"), function (b) {
       b.addEventListener("click", function () {
@@ -427,6 +455,21 @@
       api.declineRequest(orderId, {}).then(function () { UI.closeSheet(); UI.toast("お断りしました（未請求）"); setTimeout(function () { location.reload(); }, 700); });
     });
     ov.querySelector("#dc-no").addEventListener("click", UI.closeSheet);
+  }
+
+  /* レビューへの返信 */
+  function openReplySheet(key) {
+    var ov = UI.openSheet(
+      '<p class="sheet__q">レビューに返信する</p>' +
+      '<p class="lead" style="margin-bottom:12px;">返信は公開され、他の閲覧者にも表示されます。丁寧な返信は信頼につながります。</p>' +
+      '<textarea class="field field--area" id="rep-body" placeholder="レビューへのお礼やコメント"></textarea>' +
+      '<button class="btn btn--rose btn--block" id="rep-save" style="margin-top:14px;">返信する</button>'
+    );
+    ov.querySelector("#rep-save").addEventListener("click", function () {
+      var t = ov.querySelector("#rep-body").value.trim();
+      if (!t) return UI.toast("返信を入力してください");
+      api.replyToReview(key, t).then(function () { UI.closeSheet(); UI.toast("返信しました"); setTimeout(function () { location.reload(); }, 500); });
+    });
   }
 
   /* 振込先口座の登録（番号は下4桁のみ保存） */
