@@ -17,17 +17,19 @@
       var sellerOrders = res[3] || [], payouts = res[4] || [], top = res[5] || [];
       if (!mySeller) { main.innerHTML = notSellerYet() + UI.siteFooter(); return; }
       var sampleP = top[0] ? api.getCreator(top[0].id) : Promise.resolve(null);
-      Promise.all([sampleP, api.getReferralStats(mySeller.handle)]).then(function (r2) {
+      Promise.all([sampleP, api.getReferralStats(mySeller.handle), api.getReceivedReviews(), api.getBankAccount()]).then(function (r2) {
         var sample = r2[0] || { plans: [], stats: { rating: 0 }, name: "", handle: "creator" };
         var refStats = r2[1] || { visits: 0, purchases: 0, cvr: 0 };
+        var reviews = r2[2] || [], bank = r2[3] || null;
         main.innerHTML =
           head(mySeller, bal) +
           cards(mySeller, bal, sellerOrders) +
           approvalSection(mySeller) +
-          payoutSection(bal, payouts) +
+          payoutSection(bal, payouts, bank) +
           bookingsSection(sellerOrders) +
-          limitBox() +
           myPlansSection(myPlans, mySeller) +
+          reviewsReceivedSection(reviews) +
+          limitBox() +
           sampleSection(sample) +
           promoSection(mySeller, myPlans, refStats) +
           UI.siteFooter();
@@ -36,19 +38,48 @@
     });
   });
 
-  /* 自分の出品プラン(S12で作成したもの) */
+  /* 自分の出品プラン(S12で作成したもの)。各プランに編集/停止/削除 */
   function myPlansSection(myPlans, mySeller) {
     var inner = myPlans.length
-      ? '<div class="plan-list">' + myPlans.map(UI.planCard).join("") + "</div>"
+      ? '<div class="plan-list">' + myPlans.map(planAdminCard).join("") + "</div>"
       : '<p class="lead">まだ出品プランがありません。最初のプランを作ってみましょう。</p>';
     return (
-      '<div class="section">' +
+      '<div class="section hr">' +
       '<p class="section__title">あなたの出品プラン' +
       '<a class="more" href="' + h("plans/new.html") + '">＋ 新規出品</a></p>' +
       (mySeller ? '<div class="dash-limit" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("user") +
         " 出品者プロフィール：" + esc(mySeller.name) +
         ' <button class="btn btn--sm btn--outline" id="edit-seller" style="margin-left:8px;">編集</button></div>' : "") +
       inner + "</div>"
+    );
+  }
+  function planAdminCard(p) {
+    return (
+      '<div class="myplan' + (p.paused ? " is-paused" : "") + '">' +
+      UI.planCard(p) +
+      '<div class="myplan__acts">' +
+      (p.paused ? '<span class="myplan__badge">受付停止中</span>' : "") +
+      '<a class="btn btn--sm btn--outline" href="' + h("plans/new.html?id=" + p.id) + '">' + UI.icon("edit") + " 編集</a>" +
+      (p.format === "video" ? '<button class="btn btn--sm btn--outline" data-addslots="' + esc(p.id) + '">' + UI.icon("calendar-plus") + " 枠を追加</button>" : "") +
+      '<button class="btn btn--sm btn--outline" data-toggle="' + esc(p.id) + '" data-active="' + (p.paused ? "0" : "1") + '">' + (p.paused ? "公開する" : "受付停止") + "</button>" +
+      '<button class="btn btn--sm btn--ghost" data-del="' + esc(p.id) + '">' + UI.icon("trash") + "</button>" +
+      "</div></div>"
+    );
+  }
+
+  /* 受け取ったレビュー(自作プランへの評価を閲覧) */
+  function reviewsReceivedSection(reviews) {
+    if (!reviews.length) return "";
+    return (
+      '<div class="section hr">' +
+      '<p class="section__title">受け取ったレビュー <span class="muted" style="font-size:13px;font-weight:500;">' + reviews.length + "件</span></p>" +
+      reviews.slice(0, 10).map(function (r) {
+        return '<div class="review">' +
+          '<div class="review__head">' + UI.stars(r.rating) +
+          '<span class="review__date">' + esc(r.date) + "</span></div>" +
+          '<p class="review__body">' + esc(r.body) + "</p>" +
+          '<p class="field-note" style="margin-top:2px;">' + esc(r.planTitle || "") + "</p></div>";
+      }).join("") + "</div>"
     );
   }
 
@@ -106,8 +137,13 @@
   function card(v, l) { return '<div class="dash-card"><p class="dash-card__v">' + esc(String(v)) + '</p><p class="dash-card__l">' + esc(l) + "</p></div>"; }
 
   /* 出金（受取可能額・出金申請・売上明細CSV/PDF・履歴） */
-  function payoutSection(bal, payouts) {
+  function payoutSection(bal, payouts, bank) {
     var canWithdraw = bal.available > 0;
+    var bankRow = bank
+      ? '<div class="share-row"><span class="share-row__t">' + UI.icon("building-bank") + " " + esc(bank.bank) + " " + esc(bank.type) + " ****" + esc(bank.last4) + "</span>" +
+        '<button class="btn btn--sm btn--outline" id="bank">変更</button></div>'
+      : '<div class="dash-limit" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("building-bank") +
+        " 出金には振込先口座の登録が必要です。" + '<button class="btn btn--sm btn--gold" id="bank" style="margin-left:8px;">口座を登録</button></div>';
     var hist = payouts.length
       ? '<div class="payout-hist">' + payouts.slice(0, 3).map(function (w) {
           return '<div class="payout-hist__row"><span>' + esc(w.date) + (w.express ? " ・お急ぎ" : "") + "</span><span>" + App.money(w.net) + "（" + esc(w.eta) + "着金）</span></div>";
@@ -118,8 +154,9 @@
       '<p class="section__title">出金</p>' +
       '<div class="payout-box">' +
       '<p class="payout-box__amt">' + App.money(bal.available) + "<small>受取可能額</small></p>" +
-      '<button class="btn btn--gold btn--block" id="withdraw"' + (canWithdraw ? "" : " disabled") + ">出金を申請する</button>" +
-      (canWithdraw ? "" : '<p class="field-note" style="text-align:center;">取引が完了すると出金できます。</p>') +
+      bankRow +
+      '<button class="btn btn--gold btn--block" id="withdraw"' + (canWithdraw && bank ? "" : " disabled") + ">出金を申請する</button>" +
+      (!bank ? '<p class="field-note" style="text-align:center;">先に振込先口座を登録してください。</p>' : (canWithdraw ? "" : '<p class="field-note" style="text-align:center;">取引が完了すると出金できます。</p>')) +
       "</div>" +
       '<div class="stack2" style="margin-top:12px;">' +
       '<button class="btn btn--outline btn--sm" id="csv">' + UI.icon("download") + " 売上明細CSV</button>" +
@@ -146,6 +183,7 @@
         if (o.format === "video" && o.status === "progress" && o.slot) acts += '<button class="btn btn--sm btn--outline" data-ics="' + esc(o.id) + '">カレンダー</button>';
         if (o.status === "progress" && o.format !== "monthly") acts += '<button class="btn btn--sm btn--outline" data-scomplete="' + esc(o.id) + '">完了にする</button>';
         if (o.status === "progress" || o.status === "active") acts += '<button class="btn btn--sm btn--ghost" data-cancel="' + esc(o.id) + '">中止（全額返金）</button>';
+        if (["progress", "active", "completed", "approved"].indexOf(o.status) !== -1) acts += '<a class="btn btn--sm btn--outline" href="' + h("messages/index.html?order=" + o.id) + '">' + UI.icon("message-2") + " メッセージ</a>";
         var intake = (o.intake && o.intake.topic)
           ? '<p class="admin-row__intake">' + UI.icon("message-2") + " " + esc(o.intake.topic) + (o.intake.note ? "（" + esc(o.intake.note) + "）" : "") + "</p>"
           : "";
@@ -243,6 +281,23 @@
       b.addEventListener("click", function () {
         api.approveRequest(b.dataset.approve).then(function () { UI.toast("承認しました。購入者がお支払いに進めます"); setTimeout(function () { location.reload(); }, 700); });
       });
+    });
+    var bankBtn = document.getElementById("bank");
+    if (bankBtn) bankBtn.addEventListener("click", openBankSheet);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-toggle]"), function (b) {
+      b.addEventListener("click", function () {
+        var active = b.dataset.active === "1" ? false : true;   // active=1(公開中)→停止, 0→公開
+        api.setPlanActive(b.dataset.toggle, active).then(function () {
+          UI.toast(active ? "公開しました" : "受付を停止しました");
+          setTimeout(function () { location.reload(); }, 500);
+        });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-del]"), function (b) {
+      b.addEventListener("click", function () { deletePlanConfirm(b.dataset.del); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-addslots]"), function (b) {
+      b.addEventListener("click", function () { openAddSlots(b.dataset.addslots); });
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-decline]"), function (b) {
       b.addEventListener("click", function () { declineBooking(b.dataset.decline); });
@@ -372,6 +427,63 @@
       api.declineRequest(orderId, {}).then(function () { UI.closeSheet(); UI.toast("お断りしました（未請求）"); setTimeout(function () { location.reload(); }, 700); });
     });
     ov.querySelector("#dc-no").addEventListener("click", UI.closeSheet);
+  }
+
+  /* 振込先口座の登録（番号は下4桁のみ保存） */
+  function openBankSheet() {
+    var ov = UI.openSheet(
+      '<p class="sheet__q">振込先口座の登録</p>' +
+      '<p class="lead" style="margin-bottom:14px;">売上の出金先です。安全のため口座番号は下4桁のみ保存します。</p>' +
+      '<div class="form-row"><label class="field-label">銀行名</label><input class="field" id="bk-bank" placeholder="例）ELLMIE銀行"></div>' +
+      '<div class="form-row"><label class="field-label">支店名</label><input class="field" id="bk-branch" placeholder="例）渋谷支店"></div>' +
+      '<div class="form-row"><label class="field-label">種別</label><select class="field" id="bk-type"><option>普通</option><option>当座</option></select></div>' +
+      '<div class="form-row"><label class="field-label">口座番号</label><input class="field" id="bk-num" inputmode="numeric" placeholder="1234567"></div>' +
+      '<div class="form-row"><label class="field-label">口座名義（カナ）</label><input class="field" id="bk-holder" placeholder="ヤマダ ハナコ"></div>' +
+      '<button class="btn btn--rose btn--block" id="bk-save">保存する</button>'
+    );
+    ov.querySelector("#bk-save").addEventListener("click", function () {
+      var bank = ov.querySelector("#bk-bank").value.trim();
+      var num = ov.querySelector("#bk-num").value.trim();
+      if (!bank || !num) return UI.toast("銀行名と口座番号を入力してください");
+      api.setBankAccount({ bank: bank, branch: ov.querySelector("#bk-branch").value.trim(), type: ov.querySelector("#bk-type").value, number: num, holder: ov.querySelector("#bk-holder").value.trim() })
+        .then(function () { UI.closeSheet(); UI.toast("口座を登録しました"); setTimeout(function () { location.reload(); }, 500); });
+    });
+  }
+
+  /* プラン削除の確認 */
+  function deletePlanConfirm(id) {
+    var ov = UI.openSheet(
+      '<p class="sheet__q">このプランを削除しますか？</p>' +
+      '<p class="lead" style="margin-bottom:18px;">検索・プロフィールから消えます。進行中の取引には影響しません。この操作は取り消せません。</p>' +
+      '<button class="btn btn--rose btn--block" id="dl-go">削除する</button>' +
+      '<button class="btn btn--ghost btn--block" id="dl-no" style="margin-top:10px;">やめる</button>'
+    );
+    ov.querySelector("#dl-go").addEventListener("click", function () {
+      api.deletePlan(id).then(function () { UI.closeSheet(); UI.toast("削除しました"); setTimeout(function () { location.reload(); }, 500); });
+    });
+    ov.querySelector("#dl-no").addEventListener("click", UI.closeSheet);
+  }
+
+  /* 公開後の予約枠追加 */
+  function openAddSlots(id) {
+    var added = [];
+    var ov = UI.openSheet(
+      '<p class="sheet__q">予約枠を追加</p>' +
+      '<p class="lead" style="margin-bottom:12px;">公開中のプランに予約可能枠を足します（15分刻み）。</p>' +
+      '<div class="slot-add"><input class="field" type="datetime-local" id="as-input" step="900"><button type="button" class="btn btn--outline btn--sm" id="as-add">追加</button></div>' +
+      '<button type="button" class="btn btn--ghost btn--sm" id="as-week" style="margin-top:8px;">＋ この時間を毎週4週ぶん</button>' +
+      '<div class="slot-chips" id="as-chips" style="margin-top:10px;"></div>' +
+      '<button class="btn btn--rose btn--block" id="as-save" style="margin-top:14px;">枠を保存</button>'
+    );
+    function draw() {
+      ov.querySelector("#as-chips").innerHTML = added.length
+        ? added.map(function (s) { return '<span class="slot-chip">' + esc(App.slotLabel(s)) + "</span>"; }).join("")
+        : '<span class="muted" style="font-size:13px;">追加する日時を選んでください。</span>';
+    }
+    draw();
+    ov.querySelector("#as-add").addEventListener("click", function () { var v = ov.querySelector("#as-input").value; if (!v) return UI.toast("日時を選んでください"); if (added.indexOf(v) === -1) added.push(v); added.sort(); draw(); });
+    ov.querySelector("#as-week").addEventListener("click", function () { var v = ov.querySelector("#as-input").value; if (!v) return UI.toast("日時を選んでください"); for (var i = 0; i < 4; i++) { var nv = App.addWeeks(v, i); if (added.indexOf(nv) === -1) added.push(nv); } added.sort(); draw(); });
+    ov.querySelector("#as-save").addEventListener("click", function () { if (!added.length) return UI.toast("枠を追加してください"); api.addSlots(id, added).then(function () { UI.closeSheet(); UI.toast("枠を追加しました"); setTimeout(function () { location.reload(); }, 500); }); });
   }
 
   /* 出品者都合の中止（全額返金） */

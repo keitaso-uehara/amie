@@ -236,7 +236,8 @@
 .creator-hero__row { display: flex; align-items: center; gap: var(--sp-2); margin: var(--sp-2) 0; flex-wrap: wrap; }
 .creator-hero__bio { font-size: var(--fs-base); color: var(--ink-soft); line-height: 1.8; margin-top: var(--sp-2); }
 .creator-stats { display: flex; gap: var(--sp-2); margin: var(--sp-4) 0; }
-.report-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); color: var(--gray-l); margin-top: var(--sp-3); }
+.report-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); color: var(--gray-l); margin-top: var(--sp-3); background: none; border: none; cursor: pointer; }
+.creator-hero__mod { display: flex; gap: 18px; justify-content: center; }
 
 /* ---------- S4 プラン詳細 ---------- */
 .plan-hero__cover { position: relative; height: 180px; background: linear-gradient(135deg, var(--sand), var(--rose-pale)); display: flex; align-items: flex-start; padding: var(--sp-3); overflow: hidden; }
@@ -542,6 +543,12 @@
 .admin-flag { display: inline-block; padding: 1px 7px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 700; background: var(--gold-pale); color: var(--gold); }
 .admin-ok { display: inline-block; padding: 1px 7px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 700; background: #E7EFEC; color: #3F7A68; }
 .admin-row__acts { flex-wrap: wrap; justify-content: flex-end; }
+/* 出品者ダッシュボードのプラン管理カード */
+.myplan { position: relative; }
+.myplan + .myplan { margin-top: 14px; }
+.myplan__acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.myplan__badge { font-size: var(--fs-xs); font-weight: 700; color: var(--rose-deep); background: var(--rose-pale); padding: 3px 9px; border-radius: var(--r-pill); margin-right: auto; }
+.myplan.is-paused .plan-card { opacity: 0.55; }
 .admin-row__intake { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: 6px; display: flex; align-items: center; gap: 5px; background: var(--cream); border-radius: var(--r-md); padding: 5px 9px; }
 .admin-row__intake i { color: var(--rose); font-size: 13px; flex-shrink: 0; }
 

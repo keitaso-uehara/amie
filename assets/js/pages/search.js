@@ -12,6 +12,7 @@
     format: App.qs("format") || "",
     type: App.qs("type") || "",
     q: App.qs("q") || "",
+    price: App.qs("price") || "",
     sort: App.qs("sort") || "popular",
     csort: App.qs("csort") || "popular"
   };
@@ -72,9 +73,17 @@
       "</div></div>" +
       categoryNav() +
       (state.tab === "plans"
-        ? '<div class="filter-row">' + contextChips.join("") + formatChips + "</div>"
+        ? '<div class="filter-row">' + contextChips.join("") + formatChips + "</div>" + priceRow()
         : (contextChips.length ? '<div class="filter-row">' + contextChips.join("") + "</div>" : ""))
     );
+  }
+
+  /* 価格帯フィルタ(プランタブ) */
+  function priceRow() {
+    var ranges = [["", "すべて"], ["-3000", "〜3千円"], ["3000-10000", "3千〜1万"], ["10000-30000", "1万〜3万"], ["30000-", "3万円〜"]];
+    return '<div class="filter-row">' + ranges.map(function (r) {
+      return '<button class="filter-chip' + (state.price === r[0] ? " is-on" : "") + '" data-price="' + r[0] + '">' + esc(r[1]) + "</button>";
+    }).join("") + "</div>";
   }
 
   function load() {
@@ -108,6 +117,11 @@
     if (state.concern) p.concern = state.concern;
     if (state.q) p.q = state.q;
     if (state.tab === "plans" && state.format) p.format = state.format;
+    if (state.tab === "plans" && state.price) {
+      var pr = state.price.split("-");
+      if (pr[0]) p.priceMin = pr[0];
+      if (pr[1]) p.priceMax = pr[1];
+    }
     if (state.tab === "creators" && state.type) p.type = state.type;
     return p;
   }
@@ -123,6 +137,9 @@
     });
     document.querySelectorAll("[data-format]").forEach(function (b) {
       b.addEventListener("click", function () { state.format = b.dataset.format; render(); });
+    });
+    document.querySelectorAll("[data-price]").forEach(function (b) {
+      b.addEventListener("click", function () { state.price = b.dataset.price; render(); });
     });
     document.querySelectorAll("[data-clear]").forEach(function (b) {
       b.addEventListener("click", function () { state[b.dataset.clear] = ""; render(); });

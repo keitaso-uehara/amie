@@ -117,6 +117,7 @@ window.DB.creators = [
                ["celebrity", "タレント・モデル", true], ["general", "発信中", false]];
   var n = 0;
   window.TAX.categories.forEach(function (cat, ci) {
+    if (/_other$/.test(cat.slug)) return;   // 「その他」はデモ生成しない
     for (var i = 0; i < 3; i++) {
       var nm = NAMES[n % NAMES.length]; n++;
       var t = TYPES[(ci + i) % TYPES.length];

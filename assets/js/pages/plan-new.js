@@ -8,19 +8,29 @@
   var format = "chat";
   var slots = [];   // ビデオの予約可能枠(datetime-local文字列)
   var thumb = null; // サムネイル画像(dataURL)
+  var editing = null; // 編集中プラン(?id=)。null=新規
 
   document.addEventListener("DOMContentLoaded", function () {
     var main = document.getElementById("main");
     if (!api.getSession()) { App.goto("login/index.html?next=" + encodeURIComponent("plans/new.html")); return; }
-    main.innerHTML = form();
-    bind();
+    var id = App.qs("id");
+    if (id) {
+      api.getMyPlans().then(function (plans) {
+        var p = plans.filter(function (x) { return x.id === id; })[0];
+        if (!p) { main.innerHTML = UI.empty("プランが見つかりませんでした。", "ダッシュボードへ", "dashboard/index.html"); return; }
+        editing = p; format = p.format; slots = (p.slots || []).slice(); thumb = p.thumb || null;
+        main.innerHTML = form(p); bind(p);
+      });
+    } else {
+      main.innerHTML = form(); bind();
+    }
   });
 
-  function form() {
-    var cats = TAX.categories.map(function (c) { return '<option value="' + c.slug + '">' + esc(c.label) + "</option>"; }).join("");
+  function form(p) {
+    var cats = TAX.categories.map(function (c) { return '<option value="' + c.slug + '"' + (p && p.category === c.slug ? " selected" : "") + ">" + esc(c.label) + "</option>"; }).join("");
     return (
       '<div class="section">' +
-      '<p class="section__title">プランを作成</p>' +
+      '<p class="section__title">' + (editing ? "プランを編集" : "プランを作成") + "</p>" +
 
       '<div class="form-row"><label class="field-label">提供形式</label>' +
       '<div class="seg" id="fmt">' +
@@ -28,7 +38,7 @@
       "</div></div>" +
 
       '<div class="form-row"><label class="field-label">プラン名</label>' +
-      '<input class="field" id="title" maxlength="60" placeholder="例）あなた専用・垢抜けメイクレッスン"></div>' +
+      '<input class="field" id="title" maxlength="60" placeholder="例）あなた専用・垢抜けメイクレッスン" value="' + (p ? esc(p.title) : "") + '"></div>' +
 
       '<div class="form-row"><label class="field-label">カテゴリ</label>' +
       '<select class="field" id="cat">' + cats + "</select></div>" +
@@ -38,16 +48,16 @@
       '<div class="form-row" id="fmt-fields"></div>' +
 
       '<div class="form-row"><label class="field-label">料金（税込）</label>' +
-      '<input class="field" id="price" type="number" inputmode="numeric" min="1000" placeholder="3000">' +
+      '<input class="field" id="price" type="number" inputmode="numeric" min="1000" placeholder="3000" value="' + (p ? esc(String(p.price)) : "") + '">' +
       '<p class="field-note">最低1,000円・上限10万円（本人確認と実績で解除できます）。月額は1ヶ月あたりの金額です。</p></div>' +
 
       '<div class="form-row"><label class="field-label">内容説明</label>' +
-      '<textarea class="field field--area" id="desc" maxlength="2000" placeholder="こんな人におすすめ / 進め方 / 注意事項"></textarea></div>' +
+      '<textarea class="field field--area" id="desc" maxlength="2000" placeholder="こんな人におすすめ / 進め方 / 注意事項">' + (p ? esc(p.desc) : "") + "</textarea></div>" +
 
       '<div class="notice-box" style="background:var(--cream);color:var(--ink-soft);">' + UI.icon("info-circle") +
       " 公開後は運営が内容を確認します（事後パトロール）。禁止事項は" + '<a href="' + h("guide.html") + '" style="color:var(--rose-deep);">出品者ガイド</a>をご確認ください。</div>' +
 
-      '<button class="btn btn--rose btn--block" id="submit">公開する</button>' +
+      '<button class="btn btn--rose btn--block" id="submit">' + (editing ? "更新する" : "公開する") + "</button>" +
       "</div>"
     );
   }
@@ -147,9 +157,31 @@
     });
   }
 
-  function bind() {
+  /* 編集時：形式別の値をフォームに反映 */
+  function prefillDuration(p) {
+    if (!p) return;
+    if (p.format === "chat" && p.chatDays != null) {
+      var cd = document.getElementById("chatDays");
+      if (cd) {
+        if ([1, 2, 3].indexOf(p.chatDays) !== -1) cd.value = String(p.chatDays);
+        else { cd.value = "custom"; document.getElementById("chatDays-custom").hidden = false; document.getElementById("chatDaysVal").value = p.chatDays; }
+      }
+    }
+    if (p.format === "video" && p.minutes != null) {
+      var mn = document.getElementById("minutes");
+      if (mn) {
+        if ([30, 60, 90].indexOf(p.minutes) !== -1) mn.value = String(p.minutes);
+        else { mn.value = "custom"; document.getElementById("minutes-custom").hidden = false; document.getElementById("minutesVal").value = p.minutes; }
+      }
+    }
+    if (p.format === "monthly" && p.monthlyVideos != null) {
+      var mv = document.getElementById("monthlyVideos"); if (mv) mv.value = String(p.monthlyVideos);
+    }
+  }
+
+  function bind(p) {
     document.getElementById("fmt-fields").innerHTML = fmtFields();
-    wireSlots(); wireDuration(); wireThumb();
+    wireSlots(); wireDuration(); wireThumb(); showThumb(); prefillDuration(p);
     document.getElementById("fmt").addEventListener("click", function (e) {
       var b = e.target.closest("[data-fmt]"); if (!b) return;
       format = b.dataset.fmt;
@@ -182,10 +214,12 @@
         data.minutes = mins; data.slots = slots.slice();
       }
       if (format === "monthly") data.monthlyVideos = Number(document.getElementById("monthlyVideos").value);
+      if (!thumb) data.thumb = null;   // 編集でサムネを外した場合に反映
 
-      api.createPlan(data).then(function (plan) {
-        UI.toast("プランを公開しました");
-        setTimeout(function () { App.goto("plans/show.html?id=" + plan.id); }, 500);
+      var op = editing ? api.updatePlan(editing.id, data) : api.createPlan(data);
+      op.then(function (plan) {
+        UI.toast(editing ? "プランを更新しました" : "プランを公開しました");
+        setTimeout(function () { App.goto("plans/show.html?id=" + (plan ? plan.id : editing.id)); }, 500);
       });
     });
   }

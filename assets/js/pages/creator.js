@@ -42,7 +42,10 @@
       UI.statTile("評価", c.stats.rating, "") +
       UI.statTile("リピート", c.stats.repeat, "%") +
       "</div>" +
-      '<button class="report-link" id="report" type="button">' + UI.icon("flag") + " この出品者を通報する</button>" +
+      '<div class="creator-hero__mod">' +
+      '<button class="report-link" id="report" type="button">' + UI.icon("flag") + " 通報する</button>" +
+      '<button class="report-link" id="block" type="button">' + UI.icon("ban") + " " + (api.isBlocked(c.id) ? "ブロック解除" : "ブロックする") + "</button>" +
+      "</div>" +
       "</div></div>"
     );
   }
@@ -89,8 +92,18 @@
         '<button class="btn btn--rose btn--block" id="rp-send" style="margin-top:14px;">送信する</button>'
       );
       ov.querySelector("#rp-send").addEventListener("click", function () {
-        UI.closeSheet();
-        UI.toast("通報を受け付けました。ご協力ありがとうございます");
+        var body = ov.querySelector("#rp-body").value.trim();
+        api.report({ target: "出品者 / " + c.name, reason: body || "（詳細なし）" }).then(function () {
+          UI.closeSheet();
+          UI.toast("通報を受け付けました。ご協力ありがとうございます");
+        });
+      });
+    });
+    var bl = document.getElementById("block");
+    if (bl) bl.addEventListener("click", function () {
+      api.toggleBlock(c.id).then(function (on) {
+        UI.toast(on ? "ブロックしました。検索や一覧に表示されなくなります" : "ブロックを解除しました");
+        bl.innerHTML = UI.icon("ban") + " " + (on ? "ブロック解除" : "ブロックする");
       });
     });
   }

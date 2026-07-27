@@ -102,6 +102,7 @@ window.DB.plans = [
   var PRICES = [3000, 5000, 2000, 8000, 4000, 6000, 2500, 12000, 3500, 9000];
   var FORMATS = ["chat", "video", "monthly", "chat", "video", "chat", "monthly", "video", "chat", "chat"];
   window.TAX.categories.forEach(function (cat, ci) {
+    if (/_other$/.test(cat.slug)) return;   // 「その他」はデモ生成しない
     var demoCreators = window.DB.creators.filter(function (c) { return c.mainCategory === cat.slug && String(c.id).indexOf("cg_") === 0; });
     var have = window.DB.plans.filter(function (p) { return p.category === cat.slug; }).length;
     for (var i = have; i < 10; i++) {
