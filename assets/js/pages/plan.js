@@ -26,7 +26,8 @@
     return (
       '<div class="plan-hero__cover">' +
       (p.thumb ? '<img class="plan-hero__cover-img" src="' + esc(p.thumb) + '" alt="">' : "") +
-      UI.formatBadge(p.format) + "</div>" +
+      UI.formatBadge(p.format) +
+      (p.creator && p.creator.approvalRequired ? UI.approvalBadge() : "") + "</div>" +
       '<div class="plan-detail">' +
       '<p class="plan-detail__title">' + esc(p.title) + "</p>" +
       '<div class="plan-detail__meta">' +
@@ -108,7 +109,9 @@
       UI.icon(fav ? "heart-filled" : "heart") + "</button>" +
       '<div class="buybar__price"><small>' + (p.format === "monthly" ? "月額" : "料金") + '</small>' +
       '<span class="price">' + App.money(p.price) + (p.format === "monthly" ? '<small> /月</small>' : "") + "</span></div>" +
-      '<button class="btn btn--rose" id="buy">' + (p.format === "monthly" ? "申し込む" : "購入する") + "</button>";
+      (p.paused
+        ? '<button class="btn btn--rose" id="buy" disabled>受付停止中</button>'
+        : '<button class="btn btn--rose" id="buy">' + (p.creator && p.creator.approvalRequired ? "リクエストする" : (p.format === "monthly" ? "申し込む" : "購入する")) + "</button>");
     document.querySelector(".app").appendChild(bar);
 
     bar.querySelector("#fav").addEventListener("click", function () {

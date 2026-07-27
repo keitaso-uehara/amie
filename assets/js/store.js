@@ -79,7 +79,7 @@ window.api = (function () {
     var plans = allPlans();
     c.plans = (c.planIds || []).map(function (pid) {
       return plans.filter(function (p) { return p.id === pid; })[0];
-    }).filter(Boolean);
+    }).filter(function (p) { return p && !p.paused; });   // 公開プロフィールは受付停止中を隠す
     var reviews = [];
     (c.planIds || []).forEach(function (pid) {
       reviewsFor(pid).forEach(function (r) { reviews.push(Object.assign({ planId: pid }, r)); });
@@ -127,6 +127,8 @@ window.api = (function () {
             .some(function (t) { return t.toLowerCase().indexOf(q) !== -1; });
         });
       }
+      var blocks = getState().blocks || [];
+      if (blocks.length) list = list.filter(function (c) { return blocks.indexOf(c.id) === -1; });   // ブロック済みは一覧に出さない
       return Promise.resolve(list);
     },
     getCreator: function (id) {
@@ -154,6 +156,7 @@ window.api = (function () {
         list = list.filter(function (p) { return (p.concerns || []).some(function (x) { return cs.indexOf(x) !== -1; }); });
       }
       if (params.format) list = list.filter(function (p) { return p.format === params.format; });
+      if (params.priceMin) list = list.filter(function (p) { return p.price >= Number(params.priceMin); });
       if (params.priceMax) list = list.filter(function (p) { return p.price <= Number(params.priceMax); });
       if (params.q) {
         var q = params.q.toLowerCase();
@@ -162,18 +165,18 @@ window.api = (function () {
             .some(function (t) { return t.toLowerCase().indexOf(q) !== -1; });
         });
       }
-      return Promise.resolve(list);
+      return Promise.resolve(list.filter(function (p) { return !p.paused; }));   // 受付停止中は一覧に出さない
     },
     getPlan: function (id) {
       return Promise.resolve(hydratePlan(allPlans().filter(function (p) { return p.id === id; })[0] || null));
     },
     getNewPlans: function (n) {
-      var list = allPlans().map(hydratePlan).slice().reverse();
+      var list = allPlans().map(hydratePlan).filter(function (p) { return !p.paused; }).slice().reverse();
       return Promise.resolve(n ? list.slice(0, n) : list);
     },
     /* 人気順(販売数→評価)。TOPの「人気のプラン」棚に使う */
     getPopularPlans: function (n) {
-      var list = allPlans().map(hydratePlan).sort(function (a, b) {
+      var list = allPlans().map(hydratePlan).filter(function (p) { return !p.paused; }).sort(function (a, b) {
         return (b.stats.sales || 0) - (a.stats.sales || 0) || (b.stats.rating || 0) - (a.stats.rating || 0);
       });
       return Promise.resolve(n ? list.slice(0, n) : list);
@@ -246,6 +249,7 @@ window.api = (function () {
       st.seq += 1;
       var plan = allPlans().filter(function (p) { return p.id === planId; })[0];
       if (!plan) return Promise.reject(new Error("plan not found"));
+      if (plan.paused) return Promise.reject(new Error("plan paused"));
       var order = {
         id: "o_" + st.seq,
         planId: planId,
@@ -267,14 +271,22 @@ window.api = (function () {
       if (intakeBody(opts.intake)) thread0.push({ from: "me", body: intakeBody(opts.intake), timeLabel: "たった今", read: true });
       thread0.push({ from: "creator", body: "ご購入ありがとうございます！さっそくよろしくお願いします。", timeLabel: "たった今" });
       st.threads[order.id] = thread0;
+      st.myNotifications = st.myNotifications || [];
       // 予約リマインド通知(ビデオ・実装では開始24h前/直前にcronで再送)
       if (order.format === "video" && order.slot) {
-        st.myNotifications = st.myNotifications || [];
         var cName = (allCreators().filter(function (c) { return c.id === plan.creatorId; })[0] || {}).name || "出品者";
         st.myNotifications.unshift({
-          id: "n_local_" + st.seq, type: "booking", actorId: plan.creatorId,
+          id: "n_local_" + st.seq, type: "booking", actorId: plan.creatorId, orderId: order.id,
           title: cName + "さんとのビデオ予約が確定しました（" + (window.App ? App.slotLabel(order.slot) : order.slot) + "）",
           date: "たった今", read: false
+        });
+      }
+      // 出品者向け：自分のプランが購入されたら通知
+      if (plan.creatorId === "c_me") {
+        st.seq += 1;
+        st.myNotifications.unshift({
+          id: "n_sale_" + st.seq, type: "sale", actorId: plan.creatorId, orderId: order.id,
+          title: "あなたのプラン「" + plan.title + "」が購入されました", date: "たった今", read: false
         });
       }
       setState(st);
@@ -290,6 +302,7 @@ window.api = (function () {
       st.seq += 1;
       var plan = allPlans().filter(function (p) { return p.id === planId; })[0];
       if (!plan) return Promise.reject(new Error("plan not found"));
+      if (plan.paused) return Promise.reject(new Error("plan paused"));
       var order = {
         id: "o_" + st.seq, planId: planId, creatorId: plan.creatorId, format: plan.format,
         price: plan.price, status: "requested", slot: opts.slot || null, minutes: plan.minutes || null,
@@ -302,13 +315,13 @@ window.api = (function () {
       thread0.push({ from: "creator", body: "リクエストありがとうございます。内容を確認して、お受けできる場合は承認します。少々お待ちください。", timeLabel: "たった今" });
       st.threads[order.id] = thread0;
       st.myNotifications = st.myNotifications || [];
-      st.myNotifications.unshift({ id: "n_req_" + st.seq, type: "booking", actorId: plan.creatorId, title: cName + "さんへリクエストを送信しました（承認待ち）", date: "たった今", read: false });
+      st.myNotifications.unshift({ id: "n_req_" + st.seq, type: "booking", actorId: plan.creatorId, orderId: order.id, title: cName + "さんへリクエストを送信しました（承認待ち）", date: "たった今", read: false });
       // 自分以外(シード出品者)は承認を自動再現し、購入者の導線を止めない。自分の出品(c_me)はダッシュボードで承認/お断り
       if (plan.creatorId !== "c_me") {
         order.status = "approved";
         st.threads[order.id].push({ from: "creator", body: "リクエストを承認しました。最後にお支払いを確定してください。", timeLabel: "たった今" });
         st.seq += 1;
-        st.myNotifications.unshift({ id: "n_apr_" + st.seq, type: "booking", actorId: plan.creatorId, title: cName + "さんがあなたのリクエストを承認しました。お支払いに進めます。", date: "たった今", read: false });
+        st.myNotifications.unshift({ id: "n_apr_" + st.seq, type: "booking", actorId: plan.creatorId, orderId: order.id, title: cName + "さんがあなたのリクエストを承認しました。お支払いに進めます。", date: "たった今", read: false });
       }
       setState(st);
       return Promise.resolve(clone(order));
@@ -323,7 +336,7 @@ window.api = (function () {
         st.seq += 1;
         var cName = (allCreators().filter(function (c) { return c.id === done.creatorId; })[0] || {}).name || "出品者";
         st.myNotifications = st.myNotifications || [];
-        st.myNotifications.unshift({ id: "n_apr_" + st.seq, type: "booking", actorId: done.creatorId, title: cName + "さんがあなたのリクエストを承認しました。お支払いに進めます。", date: "たった今", read: false });
+        st.myNotifications.unshift({ id: "n_apr_" + st.seq, type: "booking", actorId: done.creatorId, orderId: done.id, title: cName + "さんがあなたのリクエストを承認しました。お支払いに進めます。", date: "たった今", read: false });
       }
       setState(st);
       return Promise.resolve(done ? clone(done) : null);
@@ -339,7 +352,7 @@ window.api = (function () {
         st.seq += 1;
         var cName = (allCreators().filter(function (c) { return c.id === done.creatorId; })[0] || {}).name || "出品者";
         st.myNotifications = st.myNotifications || [];
-        st.myNotifications.unshift({ id: "n_dec_" + st.seq, type: "system", actorId: done.creatorId, title: cName + "さんはリクエストを見送りました（お支払いは発生していません）", date: "たった今", read: false });
+        st.myNotifications.unshift({ id: "n_dec_" + st.seq, type: "system", actorId: done.creatorId, orderId: done.id, title: cName + "さんはリクエストを見送りました（お支払いは発生していません）", date: "たった今", read: false });
       }
       setState(st);
       return Promise.resolve(done ? clone(done) : null);
@@ -585,6 +598,80 @@ window.api = (function () {
     getMyPlans: function () {
       return Promise.resolve((getState().myPlans || []).map(hydratePlan).reverse());
     },
+    /* プラン編集(自作プランのみ) */
+    updatePlan: function (id, data) {
+      var st = getState();
+      var p = (st.myPlans || []).filter(function (x) { return x.id === id; })[0];
+      if (!p) return Promise.reject(new Error("plan not found"));
+      if (data.title != null) p.title = data.title;
+      if (data.price != null) p.price = Number(data.price);
+      if (data.category != null) p.category = data.category;
+      if (data.desc != null) p.desc = data.desc;
+      if (data.thumb !== undefined) p.thumb = data.thumb || null;
+      if (data.format && data.format !== p.format) {
+        p.format = data.format;
+        delete p.chatDays; delete p.minutes; delete p.slots; delete p.monthlyVideos; delete p.chatIncluded;
+      }
+      if (p.format === "chat" && data.chatDays != null) p.chatDays = data.chatDays;
+      if (p.format === "video") { if (data.minutes != null) p.minutes = data.minutes; if (data.slots) p.slots = data.slots; }
+      if (p.format === "monthly") { if (data.monthlyVideos != null) p.monthlyVideos = data.monthlyVideos; p.chatIncluded = true; }
+      setState(st);
+      return Promise.resolve(hydratePlan(p));
+    },
+    /* プラン削除(自作プランのみ) */
+    deletePlan: function (id) {
+      var st = getState();
+      st.myPlans = (st.myPlans || []).filter(function (x) { return x.id !== id; });
+      if (st.mySeller && st.mySeller.planIds) st.mySeller.planIds = st.mySeller.planIds.filter(function (pid) { return pid !== id; });
+      setState(st);
+      return Promise.resolve();
+    },
+    /* プランの公開/受付停止トグル */
+    setPlanActive: function (id, active) {
+      var st = getState();
+      (st.myPlans || []).forEach(function (p) { if (p.id === id) p.paused = !active; });
+      setState(st);
+      return Promise.resolve();
+    },
+    /* 予約枠の追加(公開後の継ぎ足し) */
+    addSlots: function (id, slots) {
+      var st = getState();
+      var p = (st.myPlans || []).filter(function (x) { return x.id === id; })[0];
+      if (!p) return Promise.reject(new Error("plan not found"));
+      p.slots = (p.slots || []).concat(slots || []).filter(function (v, i, a) { return a.indexOf(v) === i; }).sort();
+      setState(st);
+      return Promise.resolve(hydratePlan(p));
+    },
+    /* 出品者が受け取ったレビュー(自作プランへの集約) */
+    getReceivedReviews: function () {
+      var st = getState();
+      var seller = st.mySeller;
+      if (!seller) return Promise.resolve([]);
+      var out = [];
+      (seller.planIds || []).forEach(function (pid) {
+        var plan = allPlans().filter(function (p) { return p.id === pid; })[0];
+        reviewsFor(pid).forEach(function (r) { out.push(Object.assign({ planTitle: plan ? plan.title : "" }, r)); });
+      });
+      return Promise.resolve(out);
+    },
+    /* 出金先口座(番号は下4桁のみ保持) */
+    setBankAccount: function (data) {
+      var st = getState();
+      st.bankAccount = { bank: data.bank || "", branch: data.branch || "", type: data.type || "普通", last4: String(data.number || "").slice(-4), holder: data.holder || "" };
+      setState(st);
+      return Promise.resolve(clone(st.bankAccount));
+    },
+    getBankAccount: function () { return Promise.resolve(getState().bankAccount || null); },
+    /* ブロック(購入者→出品者。検索・一覧から除外) */
+    toggleBlock: function (targetId) {
+      var st = getState();
+      st.blocks = st.blocks || [];
+      var i = st.blocks.indexOf(targetId);
+      if (i === -1) st.blocks.push(targetId); else st.blocks.splice(i, 1);
+      setState(st);
+      return Promise.resolve(i === -1);
+    },
+    isBlocked: function (targetId) { return (getState().blocks || []).indexOf(targetId) !== -1; },
 
     /* ---------- 出品者プロフィール(S15 出品者) ---------- */
     getMySeller: function () {
@@ -603,6 +690,7 @@ window.api = (function () {
       if (seller.mainCategory && (seller.categories || []).indexOf(seller.mainCategory) === -1) seller.mainCategory = null;
       if (!seller.mainCategory && (seller.categories || []).length) seller.mainCategory = seller.categories[0];
       if (data.sns) seller.sns = data.sns;
+      if (data.avatar !== undefined) seller.avatar = data.avatar;   // プロフィール画像(dataURL)
       if (data.approvalRequired !== undefined) seller.approvalRequired = !!data.approvalRequired;   // リクエスト承認制のON/OFF
       st.mySeller = seller;
       setState(st);
@@ -676,6 +764,7 @@ window.api = (function () {
       if (!st.session) return Promise.resolve(null);
       var me = clone(window.DB.users.filter(function (u) { return u.isMe; })[0]);
       var p = st.profile || {};
+      if (p.name) me.name = p.name;
       if (p.avatar) me.avatar = p.avatar;
       if (p.bio) me.bio = p.bio;
       if (p.concerns && p.concerns.length) me.concerns = p.concerns;
@@ -683,7 +772,12 @@ window.api = (function () {
     },
     setProfile: function (data) {
       var st = getState();
-      st.profile = { avatar: data.avatar || null, bio: data.bio || "", concerns: data.concerns || [] };
+      var p = st.profile || { avatar: null, bio: "", concerns: [] };
+      if (data.name !== undefined) p.name = data.name;
+      if (data.avatar !== undefined) p.avatar = data.avatar;
+      if (data.bio !== undefined) p.bio = data.bio;
+      if (data.concerns !== undefined) p.concerns = data.concerns;
+      st.profile = p;
       setState(st);
       return Promise.resolve();
     },

@@ -82,6 +82,10 @@
 }
 .plan-card__cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .plan-card__cover .fmt { position: relative; z-index: 1; }
+.appr-badge { position: absolute; top: 8px; right: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 3px; background: rgba(43,35,32,0.66); color: #fff; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: var(--r-pill); }
+.appr-badge i { font-size: 11px; }
+.avatar--img { padding: 0; overflow: hidden; }
+.avatar--img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .plan-card__body { padding: var(--sp-3); }
 .plan-card__title { font-size: var(--fs-base); font-weight: 700; line-height: 1.5; margin-bottom: 6px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

@@ -69,10 +69,14 @@ window.UI = (function () {
     return '<div class="sns-follows' + (opts.compact ? " sns-follows--compact" : "") + '">' + items.join("") + "</div>";
   }
 
-  /* 出品者のアバター(頭文字。実装では画像URL) */
+  /* 出品者のアバター(画像があれば表示、なければ頭文字) */
   function avatar(creator, cls) {
+    creator = creator || {};
+    if (creator.avatar) return '<span class="avatar avatar--img ' + (cls || "") + '"><img src="' + esc(creator.avatar) + '" alt=""></span>';
     return '<span class="avatar ' + (cls || "") + '">' + esc((creator.name || "?").charAt(0)) + "</span>";
   }
+  /* 承認制(リクエスト制)の目印 */
+  function approvalBadge() { return '<span class="appr-badge">' + icon("shield-check") + " 承認制</span>"; }
 
   /* ---------- トップバー ---------- */
   function topbar() {
@@ -148,7 +152,8 @@ window.UI = (function () {
       '<a class="plan-card" href="' + h("plans/show.html?id=" + p.id) + '">' +
       '<div class="plan-card__cover">' +
       (p.thumb ? '<img class="plan-card__cover-img" src="' + esc(p.thumb) + '" alt="">' : "") +
-      formatBadge(p.format) + "</div>" +
+      formatBadge(p.format) +
+      (p.creator && p.creator.approvalRequired ? approvalBadge() : "") + "</div>" +
       '<div class="plan-card__body">' +
       '<p class="plan-card__title">' + esc(p.title) + "</p>" +
       '<p class="plan-card__creator">' + avatar(c, "avatar--xs") + esc(c.name) + (c.verified ? verified() : "") + "</p>" +
@@ -279,7 +284,7 @@ window.UI = (function () {
   return {
     icon: icon, topbar: topbar, tabbar: tabbar,
     formatBadge: formatBadge, priceLabel: priceLabel, formatDetail: formatDetail,
-    verified: verified, stars: stars, snsFollowers: snsFollowers, avatar: avatar, chatDurationLabel: chatDurationLabel,
+    verified: verified, stars: stars, snsFollowers: snsFollowers, avatar: avatar, chatDurationLabel: chatDurationLabel, approvalBadge: approvalBadge,
     creatorCard: creatorCard, creatorMini: creatorMini, planCard: planCard,
     reviewItem: reviewItem, statTile: statTile, typeBadge: typeBadge,
     openSheet: openSheet, closeSheet: closeSheet, toast: toast, empty: empty,

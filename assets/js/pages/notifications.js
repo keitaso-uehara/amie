@@ -4,7 +4,7 @@
   var esc = function (s) { return App.esc(s); };
   var h = function (p) { return App.href(p); };
 
-  var ICON = { message: "message-2", booking: "calendar-heart", complete: "circle-check", review: "star", news: "speakerphone" };
+  var ICON = { message: "message-2", booking: "calendar-heart", complete: "circle-check", review: "star", news: "speakerphone", sale: "shopping-bag", system: "info-circle" };
 
   document.addEventListener("DOMContentLoaded", render);
 
@@ -21,18 +21,23 @@
   }
 
   function rowHtml(n) {
+    var link = n.orderId ? h("messages/index.html?order=" + n.orderId) : null;
+    var tag = link ? "a" : "div";
+    var href = link ? ' href="' + link + '"' : "";
     return (
-      '<div class="notif-row' + (n.read ? "" : " is-unread") + '" data-id="' + esc(n.id) + '">' +
+      "<" + tag + ' class="notif-row' + (n.read ? "" : " is-unread") + '"' + href + ' data-id="' + esc(n.id) + '">' +
       '<span class="notif-row__icon">' + UI.icon(ICON[n.type] || "bell") + "</span>" +
       '<div class="notif-row__body"><p class="notif-row__title">' + esc(n.title) + "</p>" +
-      '<p class="notif-row__date">' + esc(n.date) + "</p></div></div>"
+      '<p class="notif-row__date">' + esc(n.date) + "</p></div>" +
+      (link ? UI.icon("chevron-right") : "") + "</" + tag + ">"
     );
   }
 
   function bind() {
     document.querySelectorAll(".notif-row").forEach(function (r) {
       r.addEventListener("click", function () {
-        api.markNotificationRead(r.dataset.id).then(function () { r.classList.remove("is-unread"); });
+        api.markNotificationRead(r.dataset.id);   // 遷移する場合も既読化(リンクはそのまま辿る)
+        r.classList.remove("is-unread");
       });
     });
     var all = document.getElementById("read-all");
