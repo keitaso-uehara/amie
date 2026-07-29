@@ -13,6 +13,7 @@
       document.title = c.name + " | ELLMIE";
       main.innerHTML =
         hero(c) +
+        awayBanner(c) +
         plansSection(c) +
         reviewsSection(c) +
         UI.siteFooter();
@@ -56,11 +57,22 @@
       (on ? UI.icon("check") + " フォロー中" : UI.icon("plus") + " フォロー") + "</button>";
   }
 
+  function awayBanner(c) {
+    if (!c.away) return "";
+    return (
+      '<div class="section" style="padding-bottom:0;">' +
+      '<div class="notice-box" style="background:var(--gold-pale);color:var(--ink-soft);">' + UI.icon("moon") +
+      " " + esc(c.name) + "さんは現在お休み中です。再開までしばらくお待ちください。</div></div>"
+    );
+  }
+
   function plansSection(c) {
+    var inner = (c.plans && c.plans.length)
+      ? '<div class="plan-list">' + c.plans.map(UI.planCard).join("") + "</div>"
+      : '<p class="lead" style="padding:6px 0;">' + (c.away ? "現在お休み中のため、受付を一時停止しています。" : "現在ご案内できるプランがありません。") + "</p>";
     return (
       '<div class="section hr">' +
-      '<p class="section__title">' + esc(c.name) + "さんのプラン</p>" +
-      '<div class="plan-list">' + c.plans.map(UI.planCard).join("") + "</div></div>"
+      '<p class="section__title">' + esc(c.name) + "さんのプラン</p>" + inner + "</div>"
     );
   }
 

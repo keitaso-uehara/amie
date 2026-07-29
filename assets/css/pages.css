@@ -91,6 +91,8 @@
 /* 人気のユーザー：ランキング用の均一カード（高さを揃えて余白バグを解消） */
 .rank-user-card { flex: 0 0 128px; position: relative; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 10px 14px; display: flex; flex-direction: column; align-items: center; }
 .rank-user-card .avatar--lg { margin-bottom: 8px; }
+.rank-user-card__ava { position: relative; display: inline-block; }
+.rank-user-card__ava .online-dot { position: absolute; right: 2px; bottom: 10px; }
 .rank-user-card__name { font-size: var(--fs-base); font-weight: 700; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 3px; max-width: 100%; white-space: nowrap; overflow: hidden; }
 .rank-user-card__type { font-size: var(--fs-xs); color: var(--gray); margin-top: 2px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rank-user-card__follow { margin-top: 10px; font-size: var(--fs-sm); font-weight: 700; color: var(--ink); display: inline-flex; align-items: center; gap: 4px; }

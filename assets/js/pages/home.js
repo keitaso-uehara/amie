@@ -79,7 +79,7 @@
     var ft = followerTotal(c);
     return '<a class="rank-user-card" href="' + h("creators/show.html?id=" + c.id) + '">' +
       '<span class="rank-badge rank-' + rank + '">' + rank + "</span>" +
-      UI.avatar(c, "avatar--lg") +
+      '<span class="rank-user-card__ava">' + UI.avatar(c, "avatar--lg") + UI.onlineDot(c) + "</span>" +
       '<p class="rank-user-card__name">' + esc(c.name) + (c.verified ? UI.verified() : "") + "</p>" +
       '<p class="rank-user-card__type">' + esc(c.typeLabel) + "</p>" +
       (ft ? '<p class="rank-user-card__follow">' + UI.icon("users") + " " + fmtCount(ft) + "</p>" : "") +

@@ -24,12 +24,12 @@
         main.innerHTML =
           head(mySeller, bal) +
           cards(mySeller, bal, sellerOrders) +
-          approvalSection(mySeller) +
           payoutSection(bal, payouts, bank) +
           bookingsSection(sellerOrders) +
           subscribersSection(sellerOrders) +
           myPlansSection(myPlans, mySeller) +
           reviewsReceivedSection(reviews) +
+          approvalSection(mySeller) +
           limitBox() +
           sampleSection(sample) +
           promoSection(mySeller, myPlans, refStats) +

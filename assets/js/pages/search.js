@@ -13,6 +13,7 @@
     type: App.qs("type") || "",
     q: App.qs("q") || "",
     price: App.qs("price") || "",
+    online: App.qs("online") === "1",
     sort: App.qs("sort") || "popular",
     csort: App.qs("csort") || "popular"
   };
@@ -89,7 +90,8 @@
       categoryNav() +
       (state.tab === "plans"
         ? '<div class="filter-row">' + contextChips.join("") + formatChips + "</div>" + priceRow()
-        : (contextChips.length ? '<div class="filter-row">' + contextChips.join("") + "</div>" : ""))
+        : '<div class="filter-row">' + contextChips.join("") +
+          '<button class="filter-chip' + (state.online ? " is-on" : "") + '" data-online="1"><span class="online-dot"></span> オンラインのみ</button></div>')
     );
   }
 
@@ -115,6 +117,7 @@
       });
     } else {
       api.getCreators(params()).then(function (list) {
+        if (state.online) list = list.filter(function (c) { return c.online; });
         if (!list.length) { box.innerHTML = UI.empty("条件に合う出品者が見つかりませんでした。", "条件をリセット", "search/index.html"); return; }
         list = sortCreators(list, state.csort);
         box.innerHTML =
@@ -160,6 +163,8 @@
     document.querySelectorAll("[data-price]").forEach(function (b) {
       b.addEventListener("click", function () { state.price = b.dataset.price; render(); });
     });
+    var onlineBtn = document.querySelector("[data-online]");
+    if (onlineBtn) onlineBtn.addEventListener("click", function () { state.online = !state.online; render(); });
     document.querySelectorAll("[data-clear]").forEach(function (b) {
       b.addEventListener("click", function () { state[b.dataset.clear] = ""; render(); });
     });

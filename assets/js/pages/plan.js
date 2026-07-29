@@ -39,7 +39,7 @@
       '<a class="creator-inline" href="' + h("creators/show.html?id=" + c.id) + '">' +
       UI.avatar(c, "avatar--lg") +
       '<div class="creator-inline__body">' +
-      '<p class="creator-inline__name">' + esc(c.name) + (c.verified ? UI.verified() : "") + "</p>" +
+      '<p class="creator-inline__name">' + esc(c.name) + (c.verified ? UI.verified() : "") + UI.onlineChip(c) + "</p>" +
       '<p class="creator-inline__type">' + esc(c.typeLabel) + "</p>" +
       UI.snsFollowers(c, { compact: true }) +
       "</div>" + UI.icon("chevron-right") +
