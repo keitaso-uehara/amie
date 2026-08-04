@@ -130,9 +130,7 @@
   /* ④ カテゴリ（グループタブ＋1行スクロール。ジャンル別と同じアイコンを付与） */
   function categorySection() {
     var tabs = GROUPS.map(function (gname, i) {
-      var m = GROUP_META[gname] || {};
-      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-g="' + esc(gname) + '">' +
-        UI.icon(m.icon) + "<span>" + esc(gname) + "</span></button>";
+      return '<button class="cat-tab' + (i === 0 ? " is-on" : "") + '" data-g="' + esc(gname) + '">' + esc(gname) + "</button>";
     }).join("");
     return (
       '<div class="section">' +
