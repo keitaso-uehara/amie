@@ -1,28 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,500;0,600;1,500&family=Zen+Old+Mincho:wght@500;700&display=swap');
 /* =========================================================
-   amie（アミ）— デザイントークン
-   VI: 女性誌 × エレガント。ロゴはセリフ、本文はゴシック。
-   色は「上品なローズ + ゴールド + 温かいクリーム」。
+   ELLMIE（エルミー）— デザイントークン
+   VI: クワイエット・ラグジュアリー。ロゴはBodoni(墨)、見出しは明朝、本文はゴシック。
+   色は「暖色ニュートラル(オート) + ダスティピンク + ゴールドの差し色」。
    ブランド調整はこのファイルのみ編集すれば全画面へ反映される。
    ========================================================= */
 :root{
   /* --- 色 --- */
-  --ink:#2B2320;          /* 温かみのあるチャコール */
+  --ink:#2B2320;          /* エスプレッソ(墨)。文字・ロゴ */
   --ink-soft:#6A5F58;
-  --rose:#D96E8F;         /* アクセント(ローズ) */
-  --rose-deep:#B84E70;
-  --rose-pale:#FBEDF1;
-  --rose-line:#F0D3DC;
-  --gold:#C29A54;         /* プレミアム/認証(ゴールド) */
-  --gold-pale:#F6EEDD;
-  --paper:#FFFFFF;
-  --cream:#FBF7F3;        /* 温かいオフホワイト(カード背景等) */
-  --sand:#F3EBE3;         /* セクション区切りの淡い砂色 */
+  --rose:#AE6579;         /* アクセント(ダスティピンク)。操作色 */
+  --rose-deep:#98546A;
+  --rose-pale:#F0DFE4;    /* 淡いダスティピンク(背景・チップ・♡) */
+  --rose-line:#E7CDD5;
+  --gold:#B8924A;         /* プレミアム/認証/価格(ゴールドの差し色) */
+  --gold-pale:#F1E7D4;
+  --paper:#FEFCF8;        /* 温かい白(カード背景等) */
+  --cream:#FBF8F2;        /* オート系オフホワイト */
+  --sand:#EFE9DF;         /* セクション区切りの淡いオート */
   --gray:#8C817A;
   --gray-l:#A79C93;
   --gray-ll:#C9BFB6;
   --line:rgba(43,35,32,0.14);
   --line-d:rgba(43,35,32,0.30);
-  --bg-outer:#EFE7DF;
+  --bg-outer:#EAE2D5;
   --overlay:rgba(43,35,32,0.46);
   /* 各SNSブランド色(フォロワー数表示のアイコン用) */
   --ig:#E1306C;
@@ -49,7 +50,7 @@
 
   /* --- タイポグラフィ --- */
   --font:'Zen Kaku Gothic New',sans-serif;
-  --font-serif:'Playfair Display','Zen Kaku Gothic New',serif;  /* amieロゴ/見出し */
+  --font-serif:'Bodoni Moda','Zen Old Mincho',Georgia,serif;  /* ELLMIEロゴ/見出し(欧文=Bodoni・和文=明朝) */
   --fs-xs:10px;
   --fs-sm:11px;
   --fs-md:12px;

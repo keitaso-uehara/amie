@@ -7,7 +7,7 @@
   text-align: center; padding: var(--sp-6) var(--sp-4) var(--sp-5);
   background: linear-gradient(160deg, var(--rose-pale) 0%, var(--cream) 60%, var(--paper) 100%);
 }
-.hero__logo { font-family: var(--font-serif); font-size: 44px; font-weight: 700; color: var(--rose-deep); line-height: 1; }
+.hero__logo { font-family: var(--font-serif); font-size: 44px; font-weight: 500; color: var(--ink); line-height: 1; }
 .hero__copy { font-size: var(--fs-xl); font-weight: 700; margin-top: var(--sp-3); }
 .hero__sub { font-size: var(--fs-base); color: var(--ink-soft); margin-top: 4px; }
 .search-cta {
@@ -35,7 +35,7 @@
 .cat-tabs { display: flex; gap: 4px; margin-bottom: var(--sp-3); background: var(--cream); border-radius: var(--r-pill); padding: 4px; }
 .cat-tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 4px; border-radius: var(--r-pill); border: none; background: transparent; font-size: 13px; font-weight: 700; color: var(--gray); cursor: pointer; white-space: nowrap; text-align: center; transition: background .15s, color .15s; }
 .cat-tab i { font-size: 15px; }
-.cat-tab.is-on { background: var(--rose); color: #fff; box-shadow: 0 1px 4px rgba(217, 110, 143, 0.35); }
+.cat-tab.is-on { background: var(--rose); color: #fff; box-shadow: 0 1px 4px rgba(174, 101, 121, 0.35); }
 
 /* 検索/カテゴリ下層の並び替え */
 .sort-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 var(--sp-4); }
@@ -59,8 +59,8 @@
 .plan-scroll .plan-card { flex: 0 0 158px; }
 .plan-scroll .plan-card__title { -webkit-line-clamp: 2; min-height: 40px; }
 /* 豪華＝グループ配色のグラデ＋白アイコン＋やわらかな同系色シャドウ（ジュエル調） */
-.cat-tile--beauty .cat-tile__ic { background: linear-gradient(145deg, #F0A9C2, #D96E8F); box-shadow: 0 5px 13px rgba(217,110,143,0.34); }
-.cat-tile--fashion .cat-tile__ic { background: linear-gradient(145deg, #E0C588, #C29A54); box-shadow: 0 5px 13px rgba(194,154,84,0.34); }
+.cat-tile--beauty .cat-tile__ic { background: linear-gradient(145deg, #CE93A6, #98546A); box-shadow: 0 5px 13px rgba(152,84,106,0.34); }
+.cat-tile--fashion .cat-tile__ic { background: linear-gradient(145deg, #D8BC7C, #B8924A); box-shadow: 0 5px 13px rgba(184,146,74,0.34); }
 .cat-tile--life .cat-tile__ic { background: linear-gradient(145deg, #A9C7B2, #6E8B76); box-shadow: 0 5px 13px rgba(110,139,118,0.34); }
 .cat-tile--all .cat-tile__ic { background: linear-gradient(145deg, #C8BDB2, #9A8E82); box-shadow: 0 5px 13px rgba(154,142,130,0.32); }
 
@@ -159,7 +159,7 @@
 
 /* ELLMIEの説明 */
 .about-band { background: linear-gradient(135deg, var(--rose-pale), var(--gold-pale)); border-radius: var(--r-lg); padding: var(--sp-5); text-align: center; }
-.about-band__logo { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; letter-spacing: 1px; color: var(--rose-deep); }
+.about-band__logo { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 500; letter-spacing: 1px; color: var(--ink); }
 .about-band__lead { font-family: var(--font-serif); font-size: var(--fs-lg); font-weight: 700; color: var(--ink); margin-top: 6px; }
 .about-band__sub { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.8; margin: 8px 0 16px; }
 
@@ -375,7 +375,7 @@
 
 /* ---------- S13 ログイン ---------- */
 .login { padding: var(--sp-6) var(--sp-4); text-align: center; }
-.login__logo { font-family: var(--font-serif); font-size: 52px; font-weight: 700; color: var(--rose-deep); }
+.login__logo { font-family: var(--font-serif); font-size: 52px; font-weight: 500; color: var(--ink); }
 .login__copy { font-size: var(--fs-lg); font-weight: 700; margin: var(--sp-2) 0 var(--sp-1); }
 .login__sub { font-size: var(--fs-base); color: var(--ink-soft); margin-bottom: var(--sp-5); }
 .login__values { text-align: left; background: var(--cream); border-radius: var(--r-lg); padding: var(--sp-4); margin-bottom: var(--sp-5); }
@@ -493,7 +493,7 @@
 
 /* 出金 */
 .payout-box { background: var(--cream); border-radius: var(--r-lg); padding: var(--sp-4); text-align: center; }
-.payout-box__amt { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 700; color: var(--rose-deep); margin-bottom: var(--sp-3); }
+.payout-box__amt { font-family: var(--font-serif); font-size: var(--fs-2xl); font-weight: 600; color: var(--gold); margin-bottom: var(--sp-3); }
 .payout-box__amt small { display: block; font-size: 12px; font-weight: 500; color: var(--gray); margin-top: 2px; }
 .stack2 { display: flex; gap: 8px; }
 .stack2 .btn { flex: 1; }

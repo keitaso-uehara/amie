@@ -40,7 +40,7 @@
 .sns-follow--tiktok i { color: var(--tiktok); }
 .sns-follow--youtube i { color: var(--youtube); }
 .sns-follow--x i { color: var(--x); }
-.price { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+.price { font-size: var(--fs-xl); font-weight: 600; color: var(--gold); font-family: var(--font-serif); letter-spacing: .01em; }
 .price small { font-size: var(--fs-sm); font-weight: 500; color: var(--gray-l); }
 
 /* ---------- 出品者カード ---------- */
@@ -86,10 +86,10 @@
 .appr-badge i { font-size: 11px; }
 .avatar--img { padding: 0; overflow: hidden; }
 .avatar--img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.online-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #35C759; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(53,199,89,0.35); }
+.online-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #7E8C67; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(126,140,103,0.35); }
 .creator-mini__ava { position: relative; display: inline-block; }
 .creator-mini__ava .online-dot { position: absolute; right: 2px; bottom: 10px; }
-.online-chip { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: var(--fs-xs); font-weight: 700; color: #2E9E4F; background: #E7F6EC; padding: 2px 8px; border-radius: var(--r-pill); vertical-align: middle; }
+.online-chip { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: var(--fs-xs); font-weight: 700; color: #5F7050; background: #E8EDE0; padding: 2px 8px; border-radius: var(--r-pill); vertical-align: middle; }
 .online-chip .online-dot { width: 7px; height: 7px; border: none; box-shadow: none; }
 .plan-card__body { padding: var(--sp-3); }
 .plan-card__title { font-size: var(--fs-base); font-weight: 700; line-height: 1.5; margin-bottom: 6px;
@@ -123,7 +123,7 @@
 
 /* ---------- サイトフッター ---------- */
 .site-footer { background: var(--ink); color: #fff; padding: var(--sp-6) var(--sp-4) var(--sp-5); }
-.site-footer__logo { font-family: var(--font-serif); font-size: var(--fs-3xl); font-weight: 700; color: #fff; }
+.site-footer__logo { font-family: var(--font-serif); font-size: var(--fs-3xl); font-weight: 500; letter-spacing: 1.5px; color: var(--gold); }
 .site-footer__tag { font-size: var(--fs-md); color: var(--gray-ll); margin-bottom: var(--sp-5); }
 .site-footer__cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5) var(--sp-4); }
 .site-footer__col-title { font-size: var(--fs-md); font-weight: 700; color: var(--rose-line); margin-bottom: var(--sp-2); }
